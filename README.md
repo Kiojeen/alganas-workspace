@@ -25,8 +25,6 @@ The current UI lets you:
 
 ### 1. Install dependencies
 
-This repo includes a `bun.lock`, so Bun is the intended package manager:
-
 ```bash
 bun install
 ```
