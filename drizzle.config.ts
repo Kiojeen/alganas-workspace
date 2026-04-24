@@ -8,5 +8,5 @@ export default {
   dbCredentials: {
     url: env.DATABASE_URL,
   },
-  tablesFilter: ["alganas-archive_*"],
+  tablesFilter: ["alganas-workspace_*"],
 } satisfies Config;

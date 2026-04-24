@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 

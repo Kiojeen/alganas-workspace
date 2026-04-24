@@ -1,4 +1,36 @@
-/** @type {import('prettier').Config & import('prettier-plugin-tailwindcss').PluginOptions} */
-export default {
-  plugins: ["prettier-plugin-tailwindcss"],
+/** @type {import('prettier').Config & import('prettier-plugin-tailwindcss').PluginOptions & import('@ianvs/prettier-plugin-sort-imports').PluginConfig} */
+const config = {
+  plugins: [
+    "@ianvs/prettier-plugin-sort-imports",
+    "prettier-plugin-tailwindcss", // MUST be last
+  ],
+
+  importOrder: [
+    "^react$", // React core
+    "^next$", // Next.js
+    "<THIRD_PARTY_MODULES>", // Other npm packages
+    "", // separator
+    "^@/lib/(.*)$", // Utilities / helpers
+    "^@/hooks/(.*)$", // React hooks
+    "^@/i18n/(.*)$", // Translation / localization
+    "^@/components/ui/(.*)$", // UI components first
+    "^@/components/(.*)$", // Other shared components
+    "^@/features/(.*)$", // Feature-specific components
+    "^@/server/(.*)$", // Backend / api utils
+    "^@/styles/(.*)$", // Styles / Tailwind
+    "^@/trpc/(.*)$", // tRPC clients
+    "^@/app/(.*)$", // Pages / routes
+    "", // separator
+    "^[./]", // relative imports (local components)
+  ],
+
+  trailingComma: "all",
+  singleQuote: false,
+  semi: true,
+
+  importOrderParserPlugins: ["typescript", "jsx", "decorators-legacy"],
+
+  tailwindFunctions: ["clsx", "cn", "tw", "twMerge", "cva"],
 };
+
+export default config;
