@@ -1,29 +1,60 @@
-# Create T3 App
+# Alganas Workspace
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Alganas Workspace is a small archive app for my friend to keep his AI prompts and useful design links in one place.
 
-## What's next? How do I make an app with this?
+The current UI lets you:
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+- Browse and search saved AI prompts
+- Fill prompt variables inline and copy the final prompt
+- Browse and search saved links
+- Open add/edit dialogs for prompts and links
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+## Tech Stack
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+- Next.js 16 with the App Router
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- shadcn/ui and Radix UI primitives
+- tRPC
+- Better Auth
+- Drizzle ORM
+- libSQL / SQLite
 
-## Learn More
+## Getting Started
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+### 1. Install dependencies
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+This repo includes a `bun.lock`, so Bun is the intended package manager:
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+```bash
+bun install
+```
 
-## How do I deploy this?
+### 2. Create your environment file
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Copy `.env.example` to `.env` and set the values:
+
+```env
+BETTER_AUTH_SECRET="your-secret"
+DATABASE_URL="file:./db.sqlite"
+```
+
+Notes:
+
+- `BETTER_AUTH_SECRET` is optional in development, but required in production.
+- The default database points to a local SQLite file in the project root.
+
+### 3. Prepare the database
+
+```bash
+bun run db:push
+```
+
+This applies the Drizzle schema to the configured SQLite database.
+
+### 4. Start the app
+
+```bash
+bun run dev
+```
