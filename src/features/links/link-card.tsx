@@ -1,9 +1,25 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Edit2, Trash2, ExternalLink, Link as LinkIcon } from "lucide-react"
-import type { ArchiveLink } from "@/types"
+import { useState } from "react";
+import {
+  Edit2 as Edit2Icon,
+  ExternalLink as ExternalLinkIcon,
+  Link as LinkIcon,
+  Trash2 as Trash2Icon,
+  Copy as CopyIcon,
+  Check as CheckIcon,
+  MoreHorizontal as MoreHorizontalIcon,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { ArchiveLink } from "@/types";
 
 interface LinkCardProps {
   linkData: ArchiveLink;
@@ -12,53 +28,114 @@ interface LinkCardProps {
 }
 
 export function LinkCard({ linkData, onEdit, onDelete }: LinkCardProps) {
+  const [hasCopied, setHasCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(linkData.url);
+    setHasCopied(true);
+    setTimeout(() => setHasCopied(false), 2000);
+  };
+
   return (
-    <Card className="flex flex-col h-full overflow-hidden transition-all hover:shadow-md">
-      <CardHeader className="p-5 pb-3">
-        <div className="flex items-start gap-3">
-          <div className="bg-primary/10 p-2 rounded-md">
-            <LinkIcon className="h-5 w-5 text-primary" />
+    <div className="group bg-card hover:border-primary/30 relative flex h-full flex-col gap-3 rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <div className="bg-primary/10 text-primary group-hover:bg-primary/15 mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors">
+            <LinkIcon className="size-5" />
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg leading-tight truncate" title={linkData.title}>
+
+          <div className="min-w-0 flex-1">
+            <h3
+              className="text-foreground truncate text-base leading-tight font-semibold"
+              title={linkData.title}
+            >
               {linkData.title}
             </h3>
-            <a 
-              href={linkData.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm text-blue-500 hover:underline flex items-center gap-1 mt-1 truncate"
-              title={linkData.url}
-            >
-              {linkData.url}
-              <ExternalLink className="h-3 w-3 inline shrink-0" />
-            </a>
+
+            <div className="mt-1 flex items-center gap-1.5">
+              <a
+                href={linkData.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary truncate text-sm transition-colors hover:underline"
+                title={linkData.url}
+              >
+                {linkData.url}
+              </a>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted size-6 shrink-0 opacity-0 transition-all group-hover:opacity-100 focus:opacity-100"
+                onClick={handleCopy}
+              >
+                {hasCopied ? (
+                  <CheckIcon className="size-3.5 text-emerald-500" />
+                ) : (
+                  <CopyIcon className="text-muted-foreground size-3.5" />
+                )}
+                <span className="sr-only">Copy URL</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="hover:bg-muted size-6 shrink-0 opacity-0 transition-all group-hover:opacity-100 focus:opacity-100"
+              >
+                <a
+                  href={linkData.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLinkIcon className="text-muted-foreground size-3.5" />
+                  <span className="sr-only">Visit link</span>
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
-      </CardHeader>
 
-      <CardContent className="p-5 pt-2 grow">
-        {linkData.description ? (
-          <p className="text-sm text-muted-foreground line-clamp-4">
+        <div className="-mt-2 -mr-2 shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground size-8 opacity-60 transition-opacity group-hover:opacity-100 hover:opacity-100 data-[state=open]:opacity-100"
+              >
+                <MoreHorizontalIcon className="size-4" />
+                <span className="sr-only">Link options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40 rounded-xl">
+              <DropdownMenuItem
+                onClick={() => onEdit(linkData)}
+                className="cursor-pointer text-sm"
+              >
+                <Edit2Icon className="mr-2 size-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(linkData.id)}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer text-sm"
+              >
+                <Trash2Icon className="mr-2 size-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {linkData.description && (
+        <div className="mt-1 flex-1">
+          <p className="text-muted-foreground/80 line-clamp-3 text-sm leading-relaxed">
             {linkData.description}
           </p>
-        ) : (
-          <p className="text-sm text-muted-foreground italic opacity-70">
-            No description provided.
-          </p>
-        )}
-      </CardContent>
-
-      <CardFooter className="p-4 flex justify-end gap-2 border-t mt-auto pt-4">
-        <Button variant="ghost" size="sm" onClick={() => onEdit(linkData)}>
-          <Edit2 className="h-4 w-4 mr-1" />
-          Edit
-        </Button>
-        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => onDelete(linkData.id)}>
-          <Trash2 className="h-4 w-4 mr-1" />
-          Delete
-        </Button>
-      </CardFooter>
-    </Card>
-  )
+        </div>
+      )}
+    </div>
+  );
 }

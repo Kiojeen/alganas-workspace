@@ -9,26 +9,24 @@ import {
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { LinkFolder } from "./link-folder";
-import { LinkFolderFormDialog } from "./link-folder-form-dialog";
-import { useLinkLibrary } from "./use-link-library";
-import type { LinkFolder as LinkFolderType } from "@/types";
+import { Folder } from "./folder";
+import { FolderFormDialog } from "./folder-form-dialog";
+import { usePromptLibrary } from "../use-prompt-library";
+import type { PromptFolder } from "@/types";
 
-export function LinksContent() {
-  const { folders, links, upsertFolder, deleteFolder } = useLinkLibrary();
+export function PromptsContent() {
+  const { folders, prompts, upsertFolder, deleteFolder } = usePromptLibrary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<LinkFolderType | null>(
-    null,
-  );
+  const [editingFolder, setEditingFolder] = useState<PromptFolder | null>(null);
 
-  const linksByFolder = useMemo(
+  const promptsByFolder = useMemo(
     () =>
-      links.reduce<Record<string, number>>((acc, link) => {
-        acc[link.folderId] = (acc[link.folderId] ?? 0) + 1;
+      prompts.reduce<Record<string, number>>((acc, prompt) => {
+        acc[prompt.folderId] = (acc[prompt.folderId] ?? 0) + 1;
         return acc;
       }, {}),
-    [links],
+    [prompts],
   );
 
   const filteredFolders = useMemo(() => {
@@ -39,29 +37,28 @@ export function LinksContent() {
         return true;
       }
 
-      return links.some(
-        (link) =>
-          link.folderId === folder.id &&
-          (link.title.toLowerCase().includes(query) ||
-            link.url.toLowerCase().includes(query) ||
-            link.description?.toLowerCase().includes(query)),
+      return prompts.some(
+        (prompt) =>
+          prompt.folderId === folder.id &&
+          (prompt.title.toLowerCase().includes(query) ||
+            prompt.promptText.toLowerCase().includes(query)),
       );
     });
-  }, [folders, links, searchQuery]);
+  }, [folders, prompts, searchQuery]);
 
   const handleCreateFolder = () => {
     setEditingFolder(null);
     setIsFolderDialogOpen(true);
   };
 
-  const handleEditFolder = (folder: LinkFolderType) => {
+  const handleEditFolder = (folder: PromptFolder) => {
     setEditingFolder(folder);
     setIsFolderDialogOpen(true);
   };
 
-  const handleDeleteFolder = (folder: LinkFolderType) => {
+  const handleDeleteFolder = (folder: PromptFolder) => {
     const shouldDelete = window.confirm(
-      `Delete "${folder.name}" and all links inside it?`,
+      `Delete "${folder.name}" and all prompts inside it?`,
     );
 
     if (!shouldDelete) {
@@ -76,13 +73,13 @@ export function LinksContent() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-muted-foreground text-sm">
-            Organize references into folders with custom icons, then open one to manage its links.
+            Build out folders with custom icons, then open one to manage its prompts.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <InputGroup className="bg-primary-foreground sm:w-80">
               <InputGroupInput
-                id="link-folder-search"
+                id="prompt-folder-search"
                 placeholder="Search folders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -101,10 +98,10 @@ export function LinksContent() {
         {filteredFolders.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
             {filteredFolders.map((folder) => (
-              <LinkFolder
+              <Folder
                 key={folder.id}
                 folder={folder}
-                linkCount={linksByFolder[folder.id] ?? 0}
+                promptCount={promptsByFolder[folder.id] ?? 0}
                 onEdit={handleEditFolder}
                 onDelete={handleDeleteFolder}
               />
@@ -118,13 +115,13 @@ export function LinksContent() {
             <p className="text-muted-foreground mt-1 text-sm">
               {searchQuery
                 ? "Try a different search term."
-                : "Create a folder first, then save links inside it."}
+                : "Create a folder first, then add prompts inside it."}
             </p>
           </div>
         )}
       </div>
 
-      <LinkFolderFormDialog
+      <FolderFormDialog
         open={isFolderDialogOpen}
         onOpenChange={setIsFolderDialogOpen}
         initialData={editingFolder}

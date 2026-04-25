@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,13 +17,17 @@ import type { ArchiveLink } from "@/types";
 interface LinkFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  folderId: string;
   initialData?: ArchiveLink | null;
+  onSave: (link: ArchiveLink) => void;
 }
 
 export function LinkFormDialog({
   open,
   onOpenChange,
+  folderId,
   initialData,
+  onSave,
 }: LinkFormDialogProps) {
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [url, setUrl] = useState(initialData?.url ?? "");
@@ -31,9 +35,33 @@ export function LinkFormDialog({
     initialData?.description ?? "",
   );
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setTitle(initialData?.title ?? "");
+    setUrl(initialData?.url ?? "");
+    setDescription(initialData?.description ?? "");
+  }, [initialData, open]);
+
   const handleSave = () => {
-    // Placeholder for actual save logic
-    console.log("Saving Link...", { title, url, description });
+    const trimmedTitle = title.trim();
+    const trimmedUrl = url.trim();
+    const trimmedDescription = description.trim();
+
+    if (!trimmedTitle || !trimmedUrl) {
+      return;
+    }
+
+    onSave({
+      id: initialData?.id ?? crypto.randomUUID(),
+      folderId,
+      title: trimmedTitle,
+      url: trimmedUrl,
+      description: trimmedDescription || undefined,
+    });
+
     onOpenChange(false);
   };
 

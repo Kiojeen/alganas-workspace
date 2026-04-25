@@ -18,7 +18,7 @@ import {
 import Image from "next/image";
 import type { AiPrompt } from "@/types";
 import { useMemo, useState } from "react";
-import { MODELS_LIST } from "../../components/models-list";
+import { MODELS_LIST } from "@/components/models-list";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -196,7 +196,7 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="flex justify-end gap-2">
+      <CardFooter className="flex justify-end gap-2 p-2">
         <Button variant="ghost" size="sm" onClick={() => onEdit(prompt)}>
           <Edit2Icon className="mr-1 h-4 w-4" />
           Edit
