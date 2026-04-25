@@ -130,7 +130,7 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
             copyError && "border-destructive",
           )}
         >
-          <div className="text-muted-foreground min-h-24 p-3 pr-10 text-sm leading-relaxed">
+          <div className="text-muted-foreground min-h-24 p-3 pr-10 text-sm leading-relaxed h-48 overflow-y-auto">
             {promptParts.map((part, i) =>
               part.type === "text" ? (
                 <span key={i}>{part.content}</span>
