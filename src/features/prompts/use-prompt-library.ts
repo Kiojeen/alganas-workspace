@@ -1,117 +1,82 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { MOCK_FOLDERS, MOCK_PROMPTS } from "./mock-data";
-import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
+import { api } from "@/trpc/react";
 import type { AiPrompt, PromptFolder } from "@/types";
 
-const STORAGE_KEY = "alganas.prompt-library";
-
-interface PromptLibraryState {
-  folders: PromptFolder[];
-  prompts: AiPrompt[];
+export interface PromptImageUploadInput {
+  dataBase64: string;
+  fileName: string;
+  mimeType: string;
 }
 
-const DEFAULT_STATE: PromptLibraryState = {
-  folders: MOCK_FOLDERS,
-  prompts: MOCK_PROMPTS,
-};
-
-function normalizeFolder(folder: PromptFolder): PromptFolder {
-  return {
-    ...folder,
-    icon: folder.icon || DEFAULT_FOLDER_ICON,
-  };
+export interface PromptUpsertInput {
+  folderId: string;
+  id?: string;
+  imageUpload?: PromptImageUploadInput;
+  model: string;
+  promptText: string;
+  removeImage?: boolean;
+  title: string;
 }
 
-function readStoredLibrary(): PromptLibraryState {
-  if (typeof window === "undefined") {
-    return DEFAULT_STATE;
-  }
-
-  const rawValue = window.localStorage.getItem(STORAGE_KEY);
-
-  if (!rawValue) {
-    return DEFAULT_STATE;
-  }
-
-  try {
-    const parsed = JSON.parse(rawValue) as Partial<PromptLibraryState>;
-
-    return {
-      folders: (parsed.folders ?? DEFAULT_STATE.folders).map(normalizeFolder),
-      prompts: parsed.prompts ?? DEFAULT_STATE.prompts,
-    };
-  } catch {
-    return DEFAULT_STATE;
-  }
+export interface PromptFolderUpsertInput {
+  icon: string;
+  id?: string;
+  name: string;
 }
 
 export function usePromptLibrary() {
-  const [library, setLibrary] = useState<PromptLibraryState>(DEFAULT_STATE);
-  const [isReady, setIsReady] = useState(false);
+  const utils = api.useUtils();
+  const libraryQuery = api.prompts.getLibrary.useQuery();
 
-  useEffect(() => {
-    setLibrary(readStoredLibrary());
-    setIsReady(true);
-  }, []);
+  const invalidateLibrary = () => utils.prompts.getLibrary.invalidate();
 
-  useEffect(() => {
-    if (!isReady) {
-      return;
-    }
+  const upsertFolderMutation = api.prompts.upsertFolder.useMutation({
+    onSuccess: invalidateLibrary,
+  });
+  const deleteFolderMutation = api.prompts.deleteFolder.useMutation({
+    onSuccess: invalidateLibrary,
+  });
+  const upsertPromptMutation = api.prompts.upsertPrompt.useMutation({
+    onSuccess: invalidateLibrary,
+  });
+  const deletePromptMutation = api.prompts.deletePrompt.useMutation({
+    onSuccess: invalidateLibrary,
+  });
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
-  }, [isReady, library]);
+  const folders: PromptFolder[] =
+    libraryQuery.data?.folders.map((folder) => ({
+      id: folder.id,
+      name: folder.name,
+      icon: folder.icon,
+    })) ?? [];
 
-  const upsertFolder = (folder: PromptFolder) => {
-    setLibrary((current) => {
-      const exists = current.folders.some((item) => item.id === folder.id);
-
-      return {
-        ...current,
-        folders: exists
-          ? current.folders.map((item) => (item.id === folder.id ? folder : item))
-          : [folder, ...current.folders],
-      };
-    });
-  };
-
-  const deleteFolder = (folderId: string) => {
-    setLibrary((current) => ({
-      folders: current.folders.filter((folder) => folder.id !== folderId),
-      prompts: current.prompts.filter((prompt) => prompt.folderId !== folderId),
-    }));
-  };
-
-  const upsertPrompt = (prompt: AiPrompt) => {
-    setLibrary((current) => {
-      const exists = current.prompts.some((item) => item.id === prompt.id);
-
-      return {
-        ...current,
-        prompts: exists
-          ? current.prompts.map((item) => (item.id === prompt.id ? prompt : item))
-          : [prompt, ...current.prompts],
-      };
-    });
-  };
-
-  const deletePrompt = (promptId: string) => {
-    setLibrary((current) => ({
-      ...current,
-      prompts: current.prompts.filter((prompt) => prompt.id !== promptId),
-    }));
-  };
+  const prompts: AiPrompt[] =
+    libraryQuery.data?.prompts.map((prompt) => ({
+      id: prompt.id,
+      folderId: prompt.folderId,
+      title: prompt.title,
+      promptText: prompt.promptText,
+      model: prompt.model,
+      imageUrl: prompt.imageUrl ?? undefined,
+    })) ?? [];
 
   return {
-    folders: library.folders,
-    prompts: library.prompts,
-    isReady,
-    upsertFolder,
-    deleteFolder,
-    upsertPrompt,
-    deletePrompt,
+    folders,
+    prompts,
+    isLoading: libraryQuery.isLoading,
+    isReady: !libraryQuery.isLoading,
+    upsertFolder: async (folder: PromptFolderUpsertInput) => {
+      await upsertFolderMutation.mutateAsync(folder);
+    },
+    deleteFolder: async (folderId: string) => {
+      await deleteFolderMutation.mutateAsync({ folderId });
+    },
+    upsertPrompt: async (prompt: PromptUpsertInput) => {
+      await upsertPromptMutation.mutateAsync(prompt);
+    },
+    deletePrompt: async (promptId: string) => {
+      await deletePromptMutation.mutateAsync({ promptId });
+    },
   };
 }

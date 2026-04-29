@@ -20,7 +20,7 @@ interface FolderPromptsContentProps {
 }
 
 export function FolderPromptsContent({ folderId }: FolderPromptsContentProps) {
-  const { folders, prompts, isReady, upsertPrompt, deletePrompt } =
+  const { folders, prompts, isLoading, isReady, upsertPrompt, deletePrompt } =
     usePromptLibrary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -95,7 +95,11 @@ export function FolderPromptsContent({ folderId }: FolderPromptsContentProps) {
           </div>
         </div>
 
-        {filteredPrompts.length > 0 ? (
+        {isLoading ? (
+          <div className="bg-muted/30 rounded-lg border border-dashed py-20 text-center">
+            <h3 className="text-lg font-semibold">Loading prompts...</h3>
+          </div>
+        ) : filteredPrompts.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredPrompts.map((prompt) => (
               <PromptCard

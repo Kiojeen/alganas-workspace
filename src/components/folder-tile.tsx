@@ -35,20 +35,20 @@ export function FolderTile({
   const FolderIcon = getFolderIcon(icon);
 
   return (
-    <div className="group relative flex items-center gap-3 rounded-lg border border-border/60 bg-transparent p-2 transition-colors hover:bg-muted/50">
+    <div className="group border-border/60 hover:bg-muted/50 relative flex items-center gap-3 rounded-lg border bg-transparent p-2 transition-colors">
       <Link href={href} className="absolute inset-0 z-0">
         <span className="sr-only">Open {name}</span>
       </Link>
 
-      <div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+      <div className="bg-primary/10 text-primary relative z-10 flex size-8 shrink-0 items-center justify-center rounded-md">
         <FolderIcon className="size-4" />
       </div>
 
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col pointer-events-none">
-        <h3 className="truncate text-sm leading-tight font-medium text-foreground">
+      <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col">
+        <h3 className="text-foreground truncate text-sm leading-tight font-medium">
           {name}
         </h3>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground mt-0.5 truncate text-[11px]">
           {itemCount} {itemCount === 1 ? itemLabel : `${itemLabel}s`}
         </p>
       </div>
@@ -59,21 +59,24 @@ export function FolderTile({
             <Button
               variant="ghost"
               size="icon"
-              className="size-6 text-muted-foreground opacity-0 transition-opacity hover:bg-background group-hover:opacity-100 data-[state=open]:opacity-100"
+              className="text-muted-foreground hover:bg-background size-6 transition-opacity"
             >
               <MoreHorizontal className="size-3.5" />
               <span className="sr-only">Folder options</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36 rounded-lg">
-            <DropdownMenuItem onClick={onEdit} className="cursor-pointer text-xs">
+            <DropdownMenuItem
+              onClick={onEdit}
+              className="cursor-pointer text-xs"
+            >
               <Edit2 className="mr-2 size-3.5" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={onDelete}
-              className="cursor-pointer text-xs text-destructive focus:bg-destructive/10 focus:text-destructive"
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer text-xs"
             >
               <Trash2 className="mr-2 size-3.5" />
               Delete

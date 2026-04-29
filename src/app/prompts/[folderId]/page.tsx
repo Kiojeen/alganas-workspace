@@ -1,5 +1,6 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { FolderPromptsContent } from "@/features/prompts/components/folder-prompts-content";
+import { requireAuth } from "@/server/better-auth/utils";
 
 interface FolderPromptsPageProps {
   params: Promise<{
@@ -11,7 +12,7 @@ export default async function FolderPromptsPage({
   params,
 }: FolderPromptsPageProps) {
   const { folderId } = await params;
-
+  await requireAuth();
   return (
     <WorkspaceShell
       title="Folder Prompts"

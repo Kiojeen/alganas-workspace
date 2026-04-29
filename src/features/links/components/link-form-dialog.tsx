@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import type { LinkUpsertInput } from "@/features/links/use-link-library";
 import type { ArchiveLink } from "@/types";
 
 interface LinkFormDialogProps {
@@ -19,7 +20,7 @@ interface LinkFormDialogProps {
   onOpenChange: (open: boolean) => void;
   folderId: string;
   initialData?: ArchiveLink | null;
-  onSave: (link: ArchiveLink) => void;
+  onSave: (link: LinkUpsertInput) => Promise<void>;
 }
 
 export function LinkFormDialog({
@@ -34,6 +35,7 @@ export function LinkFormDialog({
   const [description, setDescription] = useState(
     initialData?.description ?? "",
   );
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -45,7 +47,7 @@ export function LinkFormDialog({
     setDescription(initialData?.description ?? "");
   }, [initialData, open]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedTitle = title.trim();
     const trimmedUrl = url.trim();
     const trimmedDescription = description.trim();
@@ -54,15 +56,19 @@ export function LinkFormDialog({
       return;
     }
 
-    onSave({
-      id: initialData?.id ?? crypto.randomUUID(),
-      folderId,
-      title: trimmedTitle,
-      url: trimmedUrl,
-      description: trimmedDescription || undefined,
-    });
-
-    onOpenChange(false);
+    setIsSaving(true);
+    try {
+      await onSave({
+        id: initialData?.id,
+        folderId,
+        title: trimmedTitle,
+        url: trimmedUrl,
+        description: trimmedDescription || undefined,
+      });
+      onOpenChange(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -107,10 +113,16 @@ export function LinkFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Link</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Saving..." : "Save Link"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

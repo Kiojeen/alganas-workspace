@@ -11,14 +11,19 @@ import {
 } from "@/components/ui/input-group";
 import { LinkFolder } from "./link-folder";
 import { LinkFolderFormDialog } from "./link-folder-form-dialog";
-import { useLinkLibrary } from "./use-link-library";
+import { DeleteFolderDialog } from "@/components/delete-folder-dialog";
+import { useLinkLibrary } from "../use-link-library";
 import type { LinkFolder as LinkFolderType } from "@/types";
 
 export function LinksContent() {
-  const { folders, links, upsertFolder, deleteFolder } = useLinkLibrary();
+  const { folders, links, isLoading, upsertFolder, deleteFolder } =
+    useLinkLibrary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<LinkFolderType | null>(
+  const[editingFolder, setEditingFolder] = useState<LinkFolderType | null>(
+    null,
+  );
+  const [folderToDelete, setFolderToDelete] = useState<LinkFolderType | null>(
     null,
   );
 
@@ -27,8 +32,7 @@ export function LinksContent() {
       links.reduce<Record<string, number>>((acc, link) => {
         acc[link.folderId] = (acc[link.folderId] ?? 0) + 1;
         return acc;
-      }, {}),
-    [links],
+      }, {}),[links],
   );
 
   const filteredFolders = useMemo(() => {
@@ -60,15 +64,13 @@ export function LinksContent() {
   };
 
   const handleDeleteFolder = (folder: LinkFolderType) => {
-    const shouldDelete = window.confirm(
-      `Delete "${folder.name}" and all links inside it?`,
-    );
+    setFolderToDelete(folder);
+  };
 
-    if (!shouldDelete) {
-      return;
-    }
-
-    deleteFolder(folder.id);
+  const confirmDeleteFolder = async () => {
+    if (!folderToDelete) return;
+    await deleteFolder(folderToDelete.id);
+    setFolderToDelete(null);
   };
 
   return (
@@ -98,7 +100,11 @@ export function LinksContent() {
           </div>
         </div>
 
-        {filteredFolders.length > 0 ? (
+        {isLoading ? (
+          <div className="bg-muted/30 rounded-lg border border-dashed py-20 text-center">
+            <h3 className="text-lg font-semibold">Loading folders...</h3>
+          </div>
+        ) : filteredFolders.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
             {filteredFolders.map((folder) => (
               <LinkFolder
@@ -129,6 +135,13 @@ export function LinksContent() {
         onOpenChange={setIsFolderDialogOpen}
         initialData={editingFolder}
         onSave={upsertFolder}
+      />
+
+      <DeleteFolderDialog
+        open={!!folderToDelete}
+        folderName={folderToDelete?.name ?? ""}
+        onConfirm={confirmDeleteFolder}
+        onCancel={() => setFolderToDelete(null)}
       />
     </>
   );

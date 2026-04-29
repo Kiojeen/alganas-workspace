@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/input-group";
 import { LinkCard } from "./link-card";
 import { LinkFormDialog } from "./link-form-dialog";
-import { useLinkLibrary } from "./use-link-library";
+import { useLinkLibrary } from "../use-link-library";
 import type { ArchiveLink } from "@/types";
 
 interface FolderLinksContentProps {
@@ -20,7 +20,8 @@ interface FolderLinksContentProps {
 }
 
 export function FolderLinksContent({ folderId }: FolderLinksContentProps) {
-  const { folders, links, isReady, upsertLink, deleteLink } = useLinkLibrary();
+  const { folders, links, isLoading, isReady, upsertLink, deleteLink } =
+    useLinkLibrary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLink, setEditingLink] = useState<ArchiveLink | null>(null);
@@ -95,7 +96,11 @@ export function FolderLinksContent({ folderId }: FolderLinksContentProps) {
           </div>
         </div>
 
-        {filteredLinks.length > 0 ? (
+        {isLoading ? (
+          <div className="bg-muted/30 rounded-lg border border-dashed py-20 text-center">
+            <h3 className="text-lg font-semibold">Loading links...</h3>
+          </div>
+        ) : filteredLinks.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredLinks.map((link) => (
               <LinkCard

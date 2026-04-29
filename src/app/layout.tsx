@@ -1,11 +1,14 @@
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist } from "next/font/google";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
+import { getSession } from "@/server/better-auth/server";
+import { WorkspaceNavigation } from "@/components/workspace-navigation";
+import { playfairDisplay } from "@/styles/fonts";
 
 export const metadata: Metadata = {
   title: "Alganas Workspace",
@@ -14,25 +17,26 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await getSession();
   return (
-    <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${playfairDisplay.variable}`} suppressHydrationWarning>
       <body>
         <TRPCReactProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
-            enableSystem
+          enableSystem
             disableTransitionOnChange
           >
-            <TooltipProvider>{children}</TooltipProvider>
+            <TooltipProvider>
+              <WorkspaceNavigation user={session?.user} />
+              {children}
+            </TooltipProvider>
+            <Toaster />
           </ThemeProvider>
         </TRPCReactProvider>
       </body>

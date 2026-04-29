@@ -1,117 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
-import { MOCK_LINK_FOLDERS, MOCK_LINKS } from "@/features/links/mock-data";
+import { api } from "@/trpc/react";
 import type { ArchiveLink, LinkFolder } from "@/types";
 
-const STORAGE_KEY = "alganas.link-library";
-
-interface LinkLibraryState {
-  folders: LinkFolder[];
-  links: ArchiveLink[];
+export interface LinkFolderUpsertInput {
+  icon: string;
+  id?: string;
+  name: string;
 }
 
-const DEFAULT_STATE: LinkLibraryState = {
-  folders: MOCK_LINK_FOLDERS,
-  links: MOCK_LINKS,
-};
-
-function normalizeFolder(folder: LinkFolder): LinkFolder {
-  return {
-    ...folder,
-    icon: folder.icon || DEFAULT_FOLDER_ICON,
-  };
-}
-
-function readStoredLibrary(): LinkLibraryState {
-  if (typeof window === "undefined") {
-    return DEFAULT_STATE;
-  }
-
-  const rawValue = window.localStorage.getItem(STORAGE_KEY);
-
-  if (!rawValue) {
-    return DEFAULT_STATE;
-  }
-
-  try {
-    const parsed = JSON.parse(rawValue) as Partial<LinkLibraryState>;
-
-    return {
-      folders: (parsed.folders ?? DEFAULT_STATE.folders).map(normalizeFolder),
-      links: parsed.links ?? DEFAULT_STATE.links,
-    };
-  } catch {
-    return DEFAULT_STATE;
-  }
+export interface LinkUpsertInput {
+  description?: string;
+  folderId: string;
+  id?: string;
+  title: string;
+  url: string;
 }
 
 export function useLinkLibrary() {
-  const [library, setLibrary] = useState<LinkLibraryState>(DEFAULT_STATE);
-  const [isReady, setIsReady] = useState(false);
+  const utils = api.useUtils();
+  const libraryQuery = api.links.getLibrary.useQuery();
 
-  useEffect(() => {
-    setLibrary(readStoredLibrary());
-    setIsReady(true);
-  }, []);
+  const invalidateLibrary = () => utils.links.getLibrary.invalidate();
 
-  useEffect(() => {
-    if (!isReady) {
-      return;
-    }
+  const upsertFolderMutation = api.links.upsertFolder.useMutation({
+    onSuccess: invalidateLibrary,
+  });
+  const deleteFolderMutation = api.links.deleteFolder.useMutation({
+    onSuccess: invalidateLibrary,
+  });
+  const upsertLinkMutation = api.links.upsertLink.useMutation({
+    onSuccess: invalidateLibrary,
+  });
+  const deleteLinkMutation = api.links.deleteLink.useMutation({
+    onSuccess: invalidateLibrary,
+  });
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
-  }, [isReady, library]);
+  const folders: LinkFolder[] =
+    libraryQuery.data?.folders.map((folder) => ({
+      id: folder.id,
+      name: folder.name,
+      icon: folder.icon,
+    })) ?? [];
 
-  const upsertFolder = (folder: LinkFolder) => {
-    setLibrary((current) => {
-      const exists = current.folders.some((item) => item.id === folder.id);
-
-      return {
-        ...current,
-        folders: exists
-          ? current.folders.map((item) => (item.id === folder.id ? folder : item))
-          : [folder, ...current.folders],
-      };
-    });
-  };
-
-  const deleteFolder = (folderId: string) => {
-    setLibrary((current) => ({
-      folders: current.folders.filter((folder) => folder.id !== folderId),
-      links: current.links.filter((link) => link.folderId !== folderId),
-    }));
-  };
-
-  const upsertLink = (link: ArchiveLink) => {
-    setLibrary((current) => {
-      const exists = current.links.some((item) => item.id === link.id);
-
-      return {
-        ...current,
-        links: exists
-          ? current.links.map((item) => (item.id === link.id ? link : item))
-          : [link, ...current.links],
-      };
-    });
-  };
-
-  const deleteLink = (linkId: string) => {
-    setLibrary((current) => ({
-      ...current,
-      links: current.links.filter((link) => link.id !== linkId),
-    }));
-  };
+  const links: ArchiveLink[] =
+    libraryQuery.data?.links.map((link) => ({
+      id: link.id,
+      folderId: link.folderId,
+      title: link.title,
+      url: link.url,
+      description: link.description ?? undefined,
+    })) ?? [];
 
   return {
-    folders: library.folders,
-    links: library.links,
-    isReady,
-    upsertFolder,
-    deleteFolder,
-    upsertLink,
-    deleteLink,
+    folders,
+    links,
+    isLoading: libraryQuery.isLoading,
+    isReady: !libraryQuery.isLoading,
+    upsertFolder: async (folder: LinkFolderUpsertInput) => {
+      await upsertFolderMutation.mutateAsync(folder);
+    },
+    deleteFolder: async (folderId: string) => {
+      await deleteFolderMutation.mutateAsync({ folderId });
+    },
+    upsertLink: async (link: LinkUpsertInput) => {
+      await upsertLinkMutation.mutateAsync(link);
+    },
+    deleteLink: async (linkId: string) => {
+      await deleteLinkMutation.mutateAsync({ linkId });
+    },
   };
 }

@@ -15,13 +15,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { PromptFolderUpsertInput } from "@/features/prompts/use-prompt-library";
 import type { PromptFolder } from "@/types";
 
 interface FolderFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: PromptFolder | null;
-  onSave: (folder: PromptFolder) => void;
+  onSave: (folder: PromptFolderUpsertInput) => Promise<void>;
 }
 
 export function FolderFormDialog({
@@ -32,6 +33,7 @@ export function FolderFormDialog({
 }: FolderFormDialogProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [icon, setIcon] = useState(initialData?.icon ?? DEFAULT_FOLDER_ICON);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -42,19 +44,23 @@ export function FolderFormDialog({
     setIcon(initialData?.icon ?? DEFAULT_FOLDER_ICON);
   }, [initialData, open]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       return;
     }
 
-    onSave({
-      id: initialData?.id ?? crypto.randomUUID(),
-      name: trimmedName,
-      icon,
-    });
-
-    onOpenChange(false);
+    setIsSaving(true);
+    try {
+      await onSave({
+        id: initialData?.id,
+        name: trimmedName,
+        icon,
+      });
+      onOpenChange(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -85,11 +91,19 @@ export function FolderFormDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave}>
-            {initialData ? "Save Changes" : "Create Folder"}
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving
+              ? "Saving..."
+              : initialData
+                ? "Save Changes"
+                : "Create Folder"}
           </Button>
         </DialogFooter>
       </DialogContent>

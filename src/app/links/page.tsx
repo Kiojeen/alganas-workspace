@@ -1,7 +1,9 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
-import { LinksContent } from "@/features/links/links-content";
+import { LinksContent } from "@/features/links/components/links-content";
+import { requireAuth } from "@/server/better-auth/utils";
 
-export default function LinksPage() {
+export default async function LinksPage() {
+  await requireAuth();
   return (
     <WorkspaceShell
       title="Link Library"

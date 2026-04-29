@@ -1,7 +1,9 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { PromptsContent } from "@/features/prompts/components/prompts-content";
+import { requireAuth } from "@/server/better-auth/utils";
 
-export default function PromptsPage() {
+export default async function PromptsPage() {
+  await requireAuth();
   return (
     <WorkspaceShell
       title="Prompt Library"

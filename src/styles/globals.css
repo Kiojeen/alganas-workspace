@@ -5,7 +5,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-playfair-display:
+    var(--font-playfair-display), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
@@ -124,9 +128,10 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    @apply [scrollbar-color:var(--accent-foreground)_var(--muted)] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--accent-foreground)] hover:[&::-webkit-scrollbar-thumb]:bg-[var(--accent)] [&::-webkit-scrollbar-track]:bg-[var(--muted)];
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20;
+    @apply bg-background text-foreground selection:bg-primary/20 antialiased;
   }
   html {
     @apply font-sans;

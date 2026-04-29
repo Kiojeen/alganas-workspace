@@ -1,5 +1,6 @@
 import { WorkspaceShell } from "@/components/workspace-shell";
-import { FolderLinksContent } from "@/features/links/folder-links-content";
+import { FolderLinksContent } from "@/features/links/components/folder-links-content";
+import { requireAuth } from "@/server/better-auth/utils";
 
 interface FolderLinksPageProps {
   params: Promise<{
@@ -11,7 +12,7 @@ export default async function FolderLinksPage({
   params,
 }: FolderLinksPageProps) {
   const { folderId } = await params;
-
+  await requireAuth();
   return (
     <WorkspaceShell
       title="Folder Links"

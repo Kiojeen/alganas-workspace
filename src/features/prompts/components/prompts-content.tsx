@@ -11,14 +11,18 @@ import {
 } from "@/components/ui/input-group";
 import { Folder } from "./folder";
 import { FolderFormDialog } from "./folder-form-dialog";
+import { DeleteFolderDialog } from "@/components/delete-folder-dialog";
 import { usePromptLibrary } from "../use-prompt-library";
 import type { PromptFolder } from "@/types";
 
 export function PromptsContent() {
-  const { folders, prompts, upsertFolder, deleteFolder } = usePromptLibrary();
+  const { folders, prompts, isLoading, upsertFolder, deleteFolder } =
+    usePromptLibrary();
   const [searchQuery, setSearchQuery] = useState("");
   const [isFolderDialogOpen, setIsFolderDialogOpen] = useState(false);
-  const [editingFolder, setEditingFolder] = useState<PromptFolder | null>(null);
+  const[editingFolder, setEditingFolder] = useState<PromptFolder | null>(null);
+  
+  const [folderToDelete, setFolderToDelete] = useState<PromptFolder | null>(null);
 
   const promptsByFolder = useMemo(
     () =>
@@ -44,7 +48,7 @@ export function PromptsContent() {
             prompt.promptText.toLowerCase().includes(query)),
       );
     });
-  }, [folders, prompts, searchQuery]);
+  },[folders, prompts, searchQuery]);
 
   const handleCreateFolder = () => {
     setEditingFolder(null);
@@ -57,15 +61,13 @@ export function PromptsContent() {
   };
 
   const handleDeleteFolder = (folder: PromptFolder) => {
-    const shouldDelete = window.confirm(
-      `Delete "${folder.name}" and all prompts inside it?`,
-    );
+    setFolderToDelete(folder);
+  };
 
-    if (!shouldDelete) {
-      return;
-    }
-
-    deleteFolder(folder.id);
+  const confirmDeleteFolder = async () => {
+    if (!folderToDelete) return;
+    await deleteFolder(folderToDelete.id);
+    setFolderToDelete(null);
   };
 
   return (
@@ -95,7 +97,11 @@ export function PromptsContent() {
           </div>
         </div>
 
-        {filteredFolders.length > 0 ? (
+        {isLoading ? (
+          <div className="bg-muted/30 rounded-lg border border-dashed py-20 text-center">
+            <h3 className="text-lg font-semibold">Loading folders...</h3>
+          </div>
+        ) : filteredFolders.length > 0 ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
             {filteredFolders.map((folder) => (
               <Folder
@@ -126,6 +132,13 @@ export function PromptsContent() {
         onOpenChange={setIsFolderDialogOpen}
         initialData={editingFolder}
         onSave={upsertFolder}
+      />
+
+      <DeleteFolderDialog
+        open={!!folderToDelete}
+        folderName={folderToDelete?.name ?? ""}
+        onConfirm={confirmDeleteFolder}
+        onCancel={() => setFolderToDelete(null)}
       />
     </>
   );

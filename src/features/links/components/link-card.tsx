@@ -66,13 +66,13 @@ export function LinkCard({ linkData, onEdit, onDelete }: LinkCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-muted size-6 shrink-0 opacity-0 transition-all group-hover:opacity-100 focus:opacity-100"
+                className="hover:bg-muted text-muted-foreground hover:text-foreground size-7 shrink-0 transition-colors"
                 onClick={handleCopy}
               >
                 {hasCopied ? (
                   <CheckIcon className="size-3.5 text-emerald-500" />
                 ) : (
-                  <CopyIcon className="text-muted-foreground size-3.5" />
+                  <CopyIcon className="size-3.5" />
                 )}
                 <span className="sr-only">Copy URL</span>
               </Button>
@@ -81,14 +81,14 @@ export function LinkCard({ linkData, onEdit, onDelete }: LinkCardProps) {
                 variant="ghost"
                 size="icon"
                 asChild
-                className="hover:bg-muted size-6 shrink-0 opacity-0 transition-all group-hover:opacity-100 focus:opacity-100"
+                className="hover:bg-muted text-muted-foreground hover:text-foreground size-7 shrink-0 transition-colors"
               >
                 <a
                   href={linkData.url}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <ExternalLinkIcon className="text-muted-foreground size-3.5" />
+                  <ExternalLinkIcon className="size-3.5" />
                   <span className="sr-only">Visit link</span>
                 </a>
               </Button>
@@ -102,7 +102,7 @@ export function LinkCard({ linkData, onEdit, onDelete }: LinkCardProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground size-8 opacity-60 transition-opacity group-hover:opacity-100 hover:opacity-100 data-[state=open]:opacity-100"
+                className="text-muted-foreground hover:text-foreground size-8 transition-colors data-[state=open]:text-foreground"
               >
                 <MoreHorizontalIcon className="size-4" />
                 <span className="sr-only">Link options</span>
