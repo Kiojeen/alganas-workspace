@@ -31,21 +31,15 @@ const promptInputSchema = z.object({
 
 export const promptsRouter = createTRPCRouter({
   getLibrary: protectedProcedure.query(async ({ ctx }) => {
-    const [folders, promptItems] = await Promise.all([
-      ctx.db.query.promptFolders.findMany({
-        where: eq(schema.promptFolders.createdById, ctx.session.user.id),
-        orderBy: [desc(schema.promptFolders.createdAt)],
-      }),
-      ctx.db.query.prompts.findMany({
-        where: eq(schema.prompts.createdById, ctx.session.user.id),
-        orderBy: [desc(schema.prompts.createdAt)],
-      }),
-    ]);
-
-    return {
-      folders,
-      prompts: promptItems,
-    };
+    return await ctx.db.query.promptFolders.findMany({
+      where: eq(schema.promptFolders.createdById, ctx.session.user.id),
+      orderBy: [desc(schema.promptFolders.createdAt)],
+      with: {
+        prompts: {
+          orderBy: [desc(schema.prompts.createdAt)],
+        },
+      },
+    });
   }),
 
   upsertFolder: protectedProcedure

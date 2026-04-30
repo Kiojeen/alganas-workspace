@@ -18,6 +18,7 @@ export interface LinkUpsertInput {
 }
 
 export function useLinkLibrary() {
+  api.links.getLibrary.usePrefetchQuery();
   const utils = api.useUtils();
   const libraryQuery = api.links.getLibrary.useQuery();
 
@@ -37,20 +38,22 @@ export function useLinkLibrary() {
   });
 
   const folders: LinkFolder[] =
-    libraryQuery.data?.folders.map((folder) => ({
+    libraryQuery.data?.map((folder) => ({
       id: folder.id,
       name: folder.name,
       icon: folder.icon,
     })) ?? [];
 
   const links: ArchiveLink[] =
-    libraryQuery.data?.links.map((link) => ({
-      id: link.id,
-      folderId: link.folderId,
-      title: link.title,
-      url: link.url,
-      description: link.description ?? undefined,
-    })) ?? [];
+    libraryQuery.data?.flatMap((folder) =>
+      folder.links.map((link) => ({
+        id: link.id,
+        folderId: link.folderId,
+        title: link.title,
+        url: link.url,
+        description: link.description ?? undefined,
+      })),
+    ) ?? [];
 
   return {
     folders,

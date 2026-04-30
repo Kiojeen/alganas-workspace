@@ -1,8 +1,8 @@
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
-
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,19 +17,22 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await getSession();
   return (
-    <html lang="en" className={`${playfairDisplay.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${playfairDisplay.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <TRPCReactProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
-          enableSystem
+            enableSystem
             disableTransitionOnChange
           >
             <TooltipProvider>
@@ -38,6 +41,7 @@ export default async function RootLayout({
             </TooltipProvider>
             <Toaster />
           </ThemeProvider>
+          <ReactQueryDevtools initialIsOpen={false} />
         </TRPCReactProvider>
       </body>
     </html>

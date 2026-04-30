@@ -22,21 +22,15 @@ const linkInputSchema = z.object({
 
 export const linksRouter = createTRPCRouter({
   getLibrary: protectedProcedure.query(async ({ ctx }) => {
-    const [folders, linkItems] = await Promise.all([
-      ctx.db.query.linkFolders.findMany({
-        where: eq(schema.linkFolders.createdById, ctx.session.user.id),
-        orderBy: [desc(schema.linkFolders.createdAt)],
-      }),
-      ctx.db.query.links.findMany({
-        where: eq(schema.links.createdById, ctx.session.user.id),
-        orderBy: [desc(schema.links.createdAt)],
-      }),
-    ]);
-
-    return {
-      folders,
-      links: linkItems,
-    };
+    return await ctx.db.query.linkFolders.findMany({
+      where: eq(schema.linkFolders.createdById, ctx.session.user.id),
+      orderBy: [desc(schema.linkFolders.createdAt)],
+      with: {
+        links: {
+          orderBy: [desc(schema.links.createdAt)],
+        },
+      },
+    });
   }),
 
   upsertFolder: protectedProcedure

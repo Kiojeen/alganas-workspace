@@ -26,6 +26,7 @@ export interface PromptFolderUpsertInput {
 }
 
 export function usePromptLibrary() {
+  api.prompts.getLibrary.usePrefetchQuery();
   const utils = api.useUtils();
   const libraryQuery = api.prompts.getLibrary.useQuery();
 
@@ -45,21 +46,23 @@ export function usePromptLibrary() {
   });
 
   const folders: PromptFolder[] =
-    libraryQuery.data?.folders.map((folder) => ({
+    libraryQuery.data?.map((folder) => ({
       id: folder.id,
       name: folder.name,
       icon: folder.icon,
     })) ?? [];
 
   const prompts: AiPrompt[] =
-    libraryQuery.data?.prompts.map((prompt) => ({
-      id: prompt.id,
-      folderId: prompt.folderId,
-      title: prompt.title,
-      promptText: prompt.promptText,
-      model: prompt.model,
-      imageUrl: prompt.imageUrl ?? undefined,
-    })) ?? [];
+    libraryQuery.data?.flatMap((folder) =>
+      folder.prompts.map((prompt) => ({
+        id: prompt.id,
+        folderId: prompt.folderId,
+        title: prompt.title,
+        promptText: prompt.promptText,
+        model: prompt.model,
+        imageUrl: prompt.imageUrl ?? undefined,
+      })),
+    ) ?? [];
 
   return {
     folders,
