@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, SearchIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -60,14 +61,29 @@ export function PromptsContent() {
     setIsFolderDialogOpen(true);
   };
 
+  const handleSaveFolder = async (folder: Parameters<typeof upsertFolder>[0]) => {
+    try {
+      await upsertFolder(folder);
+      toast.success(folder.id ? "Folder updated." : "Folder created.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save folder.");
+      throw error;
+    }
+  };
+
   const handleDeleteFolder = (folder: PromptFolder) => {
     setFolderToDelete(folder);
   };
 
   const confirmDeleteFolder = async () => {
     if (!folderToDelete) return;
-    await deleteFolder(folderToDelete.id);
-    setFolderToDelete(null);
+    try {
+      await deleteFolder(folderToDelete.id);
+      toast.success("Folder deleted.");
+      setFolderToDelete(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete folder.");
+    }
   };
 
   return (
@@ -131,7 +147,7 @@ export function PromptsContent() {
         open={isFolderDialogOpen}
         onOpenChange={setIsFolderDialogOpen}
         initialData={editingFolder}
-        onSave={upsertFolder}
+        onSave={handleSaveFolder}
       />
 
       <DeleteFolderDialog

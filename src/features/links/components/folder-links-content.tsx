@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Plus, SearchIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,25 @@ export function FolderLinksContent({ folderId }: FolderLinksContentProps) {
   const handleEditLink = (link: ArchiveLink) => {
     setEditingLink(link);
     setIsDialogOpen(true);
+  };
+
+  const handleSaveLink = async (link: Parameters<typeof upsertLink>[0]) => {
+    try {
+      await upsertLink(link);
+      toast.success(link.id ? "Link updated." : "Link saved.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save link.");
+      throw error;
+    }
+  };
+
+  const handleDeleteLink = async (linkId: string) => {
+    try {
+      await deleteLink(linkId);
+      toast.success("Link deleted.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete link.");
+    }
   };
 
   if (isReady && !folder) {
@@ -107,7 +127,7 @@ export function FolderLinksContent({ folderId }: FolderLinksContentProps) {
                 key={link.id}
                 linkData={link}
                 onEdit={handleEditLink}
-                onDelete={deleteLink}
+                onDelete={handleDeleteLink}
               />
             ))}
           </div>
@@ -131,7 +151,7 @@ export function FolderLinksContent({ folderId }: FolderLinksContentProps) {
           onOpenChange={setIsDialogOpen}
           folderId={folderId}
           initialData={editingLink}
-          onSave={upsertLink}
+          onSave={handleSaveLink}
         />
       ) : null}
     </>

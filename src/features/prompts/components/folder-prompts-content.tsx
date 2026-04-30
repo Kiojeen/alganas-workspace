@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Plus, SearchIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +48,25 @@ export function FolderPromptsContent({ folderId }: FolderPromptsContentProps) {
   const handleEditPrompt = (prompt: AiPrompt) => {
     setEditingPrompt(prompt);
     setIsDialogOpen(true);
+  };
+
+  const handleSavePrompt = async (prompt: Parameters<typeof upsertPrompt>[0]) => {
+    try {
+      await upsertPrompt(prompt);
+      toast.success(prompt.id ? "Prompt updated." : "Prompt created.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save prompt.");
+      throw error;
+    }
+  };
+
+  const handleDeletePrompt = async (promptId: string) => {
+    try {
+      await deletePrompt(promptId);
+      toast.success("Prompt deleted.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete prompt.");
+    }
   };
 
   if (isReady && !folder) {
@@ -106,7 +126,7 @@ export function FolderPromptsContent({ folderId }: FolderPromptsContentProps) {
                 key={prompt.id}
                 prompt={prompt}
                 onEdit={handleEditPrompt}
-                onDelete={deletePrompt}
+                onDelete={handleDeletePrompt}
               />
             ))}
           </div>
@@ -131,7 +151,7 @@ export function FolderPromptsContent({ folderId }: FolderPromptsContentProps) {
           folderId={folderId}
           folderName={folder.name}
           initialData={editingPrompt}
-          onSave={upsertPrompt}
+          onSave={handleSavePrompt}
         />
       ) : null}
     </>

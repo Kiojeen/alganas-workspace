@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +13,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   type PromptImageUploadInput,
   type PromptUpsertInput,
@@ -26,6 +35,20 @@ import {
 } from "@/components/ui/select";
 import type { AiPrompt } from "@/types";
 import { MODELS_LIST } from "@/components/models-list";
+
+const formSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, { message: "Title is required." })
+    .max(160, { message: "Title must be 160 characters or less." }),
+  model: z.string().trim().min(1, { message: "Please select a model." }),
+  promptText: z
+    .string()
+    .trim()
+    .min(1, { message: "Prompt text is required." })
+    .max(20000, { message: "Prompt text is too long." }),
+});
 
 interface PromptFormDialogProps {
   open: boolean;
@@ -65,28 +88,34 @@ export function PromptFormDialog({
   initialData,
   onSave,
 }: PromptFormDialogProps) {
-  const [title, setTitle] = useState(initialData?.title ?? "");
-  const [promptText, setPromptText] = useState(initialData?.promptText ?? "");
-  const [model, setModel] = useState(initialData?.model ?? "");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: initialData?.title ?? "",
+      promptText: initialData?.promptText ?? "",
+      model: initialData?.model ?? "",
+    },
+  });
 
   useEffect(() => {
     if (!open) return;
 
-    setTitle(initialData?.title ?? "");
-    setPromptText(initialData?.promptText ?? "");
-    setModel(initialData?.model ?? "");
+    form.reset({
+      title: initialData?.title ?? "",
+      promptText: initialData?.promptText ?? "",
+      model: initialData?.model ?? "",
+    });
+    form.clearErrors();
     setSelectedImage(null);
     setRemoveImage(false);
-  }, [initialData, open]);
+    form.setFocus("title");
+  }, [form, initialData, open]);
 
-  const handleSave = async () => {
-    if (!title.trim() || !promptText.trim() || !model) {
-      return;
-    }
+  const isSaving = form.formState.isSubmitting;
 
+  const handleSave = async (values: z.infer<typeof formSchema>) => {
     let imageUpload: PromptImageUploadInput | undefined;
 
     if (selectedImage) {
@@ -97,22 +126,17 @@ export function PromptFormDialog({
       };
     }
 
-    setIsSaving(true);
-    try {
-      await onSave({
-        id: initialData?.id,
-        title: title.trim(),
-        promptText: promptText.trim(),
-        model,
-        folderId: initialData?.folderId ?? folderId,
-        imageUpload,
-        removeImage,
-      });
+    await onSave({
+      id: initialData?.id,
+      title: values.title.trim(),
+      promptText: values.promptText.trim(),
+      model: values.model,
+      folderId: initialData?.folderId ?? folderId,
+      imageUpload,
+      removeImage,
+    });
 
-      onOpenChange(false);
-    } finally {
-      setIsSaving(false);
-    }
+    onOpenChange(false);
   };
 
   return (
@@ -124,106 +148,156 @@ export function PromptFormDialog({
             This prompt will be saved in {folderName}.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              placeholder="e.g., Cyberpunk Cityscape"
-              className="bg-primary-foreground"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="model">AI Model</Label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="bg-primary-foreground">
-                <SelectValue placeholder="Select a model" />
-              </SelectTrigger>
-              <SelectContent className="bg-primary-foreground">
-                {MODELS_LIST.map((model) => (
-                  <SelectItem key={model.slug} value={model.slug}>
-                    {model.icon}
-                    {model.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="prompt">Prompt</Label>
-            <Textarea
-              id="prompt"
-              placeholder="Enter your full prompt here..."
-              className="bg-primary-foreground h-32 resize-none"
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="imageFile">Example Image</Label>
-            <Input
-              id="imageFile"
-              type="file"
-              accept="image/*"
-              className="bg-primary-foreground cursor-pointer"
-              onChange={(e) => {
-                const nextFile = e.target.files?.[0] ?? null;
-                setSelectedImage(nextFile);
-                if (nextFile) {
-                  setRemoveImage(false);
-                }
-              }}
-            />
-            <p className="text-muted-foreground text-xs">
-              Upload an optional preview image. Files are stored in `prompt_images`.
-            </p>
-            {initialData?.imageUrl && !selectedImage && !removeImage ? (
-              <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
-                <span className="truncate">Current image attached</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setRemoveImage(true)}
-                >
-                  Remove
-                </Button>
-              </div>
-            ) : null}
-            {selectedImage ? (
-              <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
-                <span className="truncate">{selectedImage.name}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedImage(null)}
-                >
-                  Clear
-                </Button>
-              </div>
-            ) : null}
-            {removeImage ? (
-              <p className="text-muted-foreground text-xs">
-                The current image will be removed when you save.
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSaving}
+        <Form {...form}>
+          <form
+            className="grid gap-4 py-4"
+            onSubmit={form.handleSubmit(handleSave)}
           >
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Prompt"}
-          </Button>
-        </DialogFooter>
+            <FieldGroup>
+              <Controller
+                name="title"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="title">Title</FieldLabel>
+                    <Input
+                      {...field}
+                      id="title"
+                      placeholder="e.g., Cyberpunk Cityscape"
+                      className="bg-primary-foreground"
+                      data-invalid={fieldState.invalid}
+                      disabled={isSaving}
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="model"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="model">AI Model</FieldLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isSaving}
+                    >
+                      <SelectTrigger
+                        id="model"
+                        className="bg-primary-foreground"
+                        aria-invalid={fieldState.invalid}
+                      >
+                        <SelectValue placeholder="Select a model" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-primary-foreground">
+                        {MODELS_LIST.map((model) => (
+                          <SelectItem key={model.slug} value={model.slug}>
+                            {model.icon}
+                            {model.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="promptText"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="prompt">Prompt</FieldLabel>
+                    <Textarea
+                      {...field}
+                      id="prompt"
+                      placeholder="Enter your full prompt here..."
+                      className="bg-primary-foreground h-32 resize-none"
+                      data-invalid={fieldState.invalid}
+                      disabled={isSaving}
+                    />
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+
+              <Field>
+                <FieldLabel htmlFor="imageFile">Example Image</FieldLabel>
+                <Input
+                  id="imageFile"
+                  type="file"
+                  accept="image/*"
+                  className="bg-primary-foreground cursor-pointer"
+                  disabled={isSaving}
+                  onChange={(e) => {
+                    const nextFile = e.target.files?.[0] ?? null;
+                    setSelectedImage(nextFile);
+                    if (nextFile) {
+                      setRemoveImage(false);
+                    }
+                  }}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Upload an optional preview image. Files are stored in `prompt_images`.
+                </p>
+                {initialData?.imageUrl && !selectedImage && !removeImage ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
+                    <span className="truncate">Current image attached</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setRemoveImage(true)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : null}
+                {selectedImage ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
+                    <span className="truncate">{selectedImage.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedImage(null)}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                ) : null}
+                {removeImage ? (
+                  <p className="text-muted-foreground text-xs">
+                    The current image will be removed when you save.
+                  </p>
+                ) : null}
+              </Field>
+            </FieldGroup>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? "Saving..." : "Save Prompt"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
