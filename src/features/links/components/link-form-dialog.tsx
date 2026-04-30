@@ -85,7 +85,7 @@ export function LinkFormDialog({
       folderId,
       title: values.title.trim(),
       url: values.url.trim(),
-      description: values.description?.trim() || undefined,
+      description: values.description?.trim() ?? undefined,
     });
     onOpenChange(false);
   };
