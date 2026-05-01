@@ -1,0 +1,13 @@
+{
+  "name": "alganas-workspace",
+  "compatibility_date": "2024-09-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "alganas-workspace-db",
+      "database_id": "bb13dcba-be07-423e-ba07-27f1be510bac",
+      "migrations_dir": "drizzle/migrations"
+    }
+  ]
+}

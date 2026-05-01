@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getSession } from "@/server/better-auth/server";
 import { WorkspaceNavigation } from "@/components/workspace-navigation";
 import { playfairDisplay } from "@/styles/fonts";
+import PWAProvider from "@/providers/sw-provider";
 
 export const metadata: Metadata = {
   title: "Alganas Workspace",
@@ -28,21 +29,23 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <TRPCReactProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>
-              <WorkspaceNavigation user={session?.user} />
-              {children}
-            </TooltipProvider>
-            <Toaster />
-          </ThemeProvider>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </TRPCReactProvider>
+        <PWAProvider>
+          <TRPCReactProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <TooltipProvider>
+                <WorkspaceNavigation user={session?.user} />
+                {children}
+              </TooltipProvider>
+              <Toaster />
+            </ThemeProvider>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </TRPCReactProvider>
+        </PWAProvider>
       </body>
     </html>
   );

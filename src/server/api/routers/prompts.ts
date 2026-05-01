@@ -2,7 +2,11 @@ import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
 import { schema } from "@/server/db/schema";
 import { deletePromptImage, savePromptImage } from "@/server/prompt-images";
@@ -204,24 +208,17 @@ export const promptsRouter = createTRPCRouter({
         );
     }),
 
-  getCounts: protectedProcedure.query(async ({ ctx }) => {
+  getCounts: publicProcedure.query(async ({ ctx }) => {
     const [folders, prompts] = await Promise.all([
-      ctx.db.$count(
-        schema.promptFolders,
-        eq(schema.promptFolders.createdById, ctx.session.user.id),
-      ),
-      ctx.db.$count(
-        schema.prompts,
-        eq(schema.prompts.createdById, ctx.session.user.id),
-      ),
+      ctx.db.$count(schema.promptFolders),
+      ctx.db.$count(schema.prompts),
     ]);
 
     return { folders, prompts };
   }),
 
-  getLatest: protectedProcedure.query(async ({ ctx }) => {
+  getLatest: publicProcedure.query(async ({ ctx }) => {
     const prompt = await ctx.db.query.prompts.findFirst({
-      where: eq(schema.prompts.createdById, ctx.session.user.id),
       orderBy: [desc(schema.prompts.createdAt)],
       columns: {
         title: false,

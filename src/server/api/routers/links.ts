@@ -3,7 +3,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 import { schema } from "@/server/db/schema";
 
 const linkFolderInputSchema = z.object({
@@ -130,16 +134,10 @@ export const linksRouter = createTRPCRouter({
         );
     }),
 
-  getCounts: protectedProcedure.query(async ({ ctx }) => {
+  getCounts: publicProcedure.query(async ({ ctx }) => {
     const [folders, links] = await Promise.all([
-      ctx.db.$count(
-        schema.linkFolders,
-        eq(schema.linkFolders.createdById, ctx.session.user.id),
-      ),
-      ctx.db.$count(
-        schema.links,
-        eq(schema.links.createdById, ctx.session.user.id),
-      ),
+      ctx.db.$count(schema.linkFolders),
+      ctx.db.$count(schema.links),
     ]);
 
     return { folders, links };
