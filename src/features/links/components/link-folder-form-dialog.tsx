@@ -83,7 +83,7 @@ export function LinkFolderFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl pb-0">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Folder" : "Create Folder"}
