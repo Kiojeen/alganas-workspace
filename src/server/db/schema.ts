@@ -51,6 +51,7 @@ export const prompts = sqliteTable(
       .notNull()
       .references(() => promptFolders.id, { onDelete: "cascade" }),
     title: d.text({ length: 255 }).notNull(),
+    description: d.text(),
     promptText: d.text().notNull(),
     model: d.text({ length: 255 }).notNull(),
     imageUrl: d.text({ length: 255 }),

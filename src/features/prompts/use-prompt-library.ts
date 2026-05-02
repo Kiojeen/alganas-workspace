@@ -14,6 +14,7 @@ export interface PromptUpsertInput {
   id?: string;
   imageUpload?: PromptImageUploadInput;
   model: string;
+  description?: string;
   promptText: string;
   removeImage?: boolean;
   title: string;
@@ -58,6 +59,7 @@ export function usePromptLibrary() {
         id: prompt.id,
         folderId: prompt.folderId,
         title: prompt.title,
+        description: prompt.description ?? undefined,
         promptText: prompt.promptText,
         model: prompt.model,
         imageUrl: prompt.imageUrl ?? undefined,

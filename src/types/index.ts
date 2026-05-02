@@ -1,6 +1,7 @@
 export interface AiPrompt {
   id: string;
   title: string;
+  description?: string;
   promptText: string;
   imageUrl?: string;
   model: string;

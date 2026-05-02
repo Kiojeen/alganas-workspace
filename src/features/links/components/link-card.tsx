@@ -23,11 +23,17 @@ import type { ArchiveLink } from "@/types";
 
 interface LinkCardProps {
   linkData: ArchiveLink;
+  folderName?: string;
   onEdit: (link: ArchiveLink) => void;
   onDelete: (id: string) => void;
 }
 
-export function LinkCard({ linkData, onEdit, onDelete }: LinkCardProps) {
+export function LinkCard({
+  linkData,
+  folderName,
+  onEdit,
+  onDelete,
+}: LinkCardProps) {
   const [hasCopied, setHasCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -51,6 +57,11 @@ export function LinkCard({ linkData, onEdit, onDelete }: LinkCardProps) {
             >
               {linkData.title}
             </h3>
+            {folderName ? (
+              <p className="text-muted-foreground mt-1 truncate text-xs">
+                {folderName}
+              </p>
+            ) : null}
 
             <div className="mt-1 flex items-center gap-1.5">
               <a

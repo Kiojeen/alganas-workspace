@@ -14,23 +14,38 @@ import {
   ImageIcon,
   CopyIcon,
   CheckIcon,
+  ExpandIcon,
 } from "lucide-react";
 import Image from "next/image";
 import type { AiPrompt } from "@/types";
-import { useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { MODELS_LIST } from "@/components/models-list";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PromptCardProps {
   prompt: AiPrompt;
+  folderName?: string;
   onEdit: (prompt: AiPrompt) => void;
   onDelete: (id: string) => void;
 }
 
-export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
+export function PromptCard({
+  prompt,
+  folderName,
+  onEdit,
+  onDelete,
+}: PromptCardProps) {
   const [hasCopied, setHasCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
+  const [isImageOpen, setIsImageOpen] = useState(false);
   const promptParts = useMemo(() => {
     const regex = /\{([^}]+)\}/g;
     const parts: { type: "text" | "variable"; content: string }[] = [];
@@ -55,15 +70,29 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
     return parts;
   }, [prompt.promptText]);
 
-  const [variableValues, setVariableValues] = useState<Record<string, string>>(
+  const variableNames = useMemo(
     () =>
-      Object.fromEntries(
-        (prompt.promptText.match(/\{([^}]+)\}/g) ?? []).map((m) => [
-          m.slice(1, -1),
-          "",
-        ]),
+      Array.from(
+        new Set(
+          promptParts
+            .filter((part) => part.type === "variable")
+            .map((part) => part.content),
+        ),
       ),
+    [promptParts],
   );
+
+  const [variableValues, setVariableValues] = useState<Record<string, string>>(
+    {},
+  );
+
+  useEffect(() => {
+    setVariableValues((previous) =>
+      Object.fromEntries(
+        variableNames.map((name) => [name, previous[name] ?? ""]),
+      ),
+    );
+  }, [variableNames]);
 
   const resolvedPrompt = useMemo(
     () =>
@@ -91,23 +120,57 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
     [],
   );
 
+  const modelMeta = modelsMap.get(prompt.model);
+  const modelLabel = modelMeta?.label ?? prompt.model.replace("-", " ");
+  const placeholderTitle = prompt.title.trim() || "Prompt";
+  const placeholderInitials = placeholderTitle
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
+
   return (
+    <>
     <Card className="flex flex-col overflow-hidden transition-all hover:shadow-md">
       {/* Image Section */}
       <div className="bg-muted relative flex aspect-video w-full items-center justify-center overflow-hidden">
         {prompt.imageUrl ? (
-          <Image
-            src={prompt.imageUrl}
-            height={350}
-            width={400}
-            alt={prompt.title}
-            loading="lazy"
-            className="h-full w-full object-cover"
-          />
+          <button
+            type="button"
+            className="group relative h-full w-full cursor-zoom-in overflow-hidden text-left"
+            onClick={() => setIsImageOpen(true)}
+          >
+            <Image
+              src={prompt.imageUrl}
+              height={350}
+              width={400}
+              alt={prompt.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            />
+            <span className="absolute right-2 bottom-2 flex size-8 items-center justify-center rounded-md bg-background/85 text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+              <ExpandIcon className="size-4" />
+              <span className="sr-only">View image</span>
+            </span>
+          </button>
         ) : (
-          <div className="text-muted-foreground flex flex-col items-center">
-            <ImageIcon className="mb-2 h-8 w-8 opacity-50" />
-            <span className="text-xs">No image uploaded</span>
+          <div className="from-muted via-primary/5 to-secondary/50 flex h-full w-full flex-col justify-between bg-linear-to-br p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="bg-background/80 text-primary flex size-11 items-center justify-center rounded-lg border text-sm font-semibold shadow-sm">
+                {placeholderInitials || <ImageIcon className="size-5" />}
+              </div>
+              <Badge variant="secondary" className="max-w-32 truncate">
+                {modelLabel}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-foreground line-clamp-2 text-lg leading-tight font-semibold">
+                {placeholderTitle}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Text prompt preview
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -118,12 +181,22 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
             {prompt.title}
           </h3>
           <Badge variant="secondary" className="whitespace-nowrap capitalize">
-            {modelsMap.get(prompt.model)?.icon} {prompt.model.replace("-", " ")}
+            {modelMeta?.icon} {prompt.model.replace("-", " ")}
           </Badge>
         </div>
+        {folderName ? (
+          <p className="text-muted-foreground mt-1 truncate text-xs">
+            {folderName}
+          </p>
+        ) : null}
       </CardHeader>
 
       <CardContent className="grow p-4 pt-2">
+        {prompt.description ? (
+          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm leading-relaxed">
+            {prompt.description}
+          </p>
+        ) : null}
         <div
           className={cn(
             "bg-muted/50 relative rounded-md border",
@@ -147,19 +220,21 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
                     }))
                   }
                   className={cn(
-                    "mx-0.5 bg-primary-foreground focus-visible:ring-0 inline-block h-auto w-(--input-w) rounded border px-1.5 py-0.5 text-sm",
+                    "mx-0.5 inline-block h-auto min-w-0 rounded border bg-primary-foreground px-1.5 py-0.5 text-sm focus-visible:ring-0",
                     copyError &&
                       !variableValues[part.content] &&
                       "border-destructive bg-destructive/10 placeholder:text-destructive/60",
                   )}
                   style={
                     {
-                      "--input-w": `${Math.max(
-                        part.content.length + 1,
-                        variableValues[part.content]?.length ?? 0,
+                      width: `${Math.max(
+                        part.content.length + 2,
+                        (variableValues[part.content]?.length ?? 0) + 1,
+                        8,
                       )}ch`,
                       maxWidth: "100%",
-                    } as React.CSSProperties
+                      boxSizing: "border-box",
+                    } satisfies CSSProperties
                   }
                 />
               ),
@@ -212,5 +287,28 @@ export function PromptCard({ prompt, onEdit, onDelete }: PromptCardProps) {
         </Button>
       </CardFooter>
     </Card>
+    <Dialog open={isImageOpen} onOpenChange={setIsImageOpen}>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>{prompt.title}</DialogTitle>
+          {prompt.description ? (
+            <DialogDescription>{prompt.description}</DialogDescription>
+          ) : null}
+        </DialogHeader>
+        {prompt.imageUrl ? (
+          <div className="bg-muted relative max-h-[75vh] min-h-80 overflow-hidden rounded-lg">
+            <Image
+              src={prompt.imageUrl}
+              alt={prompt.title}
+              width={1200}
+              height={900}
+              className="h-full max-h-[75vh] w-full object-contain"
+              priority
+            />
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

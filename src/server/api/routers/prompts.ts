@@ -27,6 +27,12 @@ const promptInputSchema = z.object({
   id: z.uuid().optional(),
   folderId: z.uuid(),
   title: z.string().trim().min(1).max(160),
+  description: z
+    .string()
+    .trim()
+    .max(2000, { message: "Description must be 2000 characters or less." })
+    .optional()
+    .or(z.literal("")),
   promptText: z.string().trim().min(1).max(20_000),
   model: z.string().trim().min(1).max(80),
   imageUpload: promptImageUploadSchema.optional(),
@@ -150,6 +156,7 @@ export const promptsRouter = createTRPCRouter({
           .set({
             folderId: input.folderId,
             title: input.title,
+            description: input.description?.trim() || null,
             promptText: input.promptText,
             model: input.model,
             imageUrl,
@@ -175,6 +182,7 @@ export const promptsRouter = createTRPCRouter({
       await ctx.db.insert(schema.prompts).values({
         folderId: input.folderId,
         title: input.title,
+        description: input.description?.trim() || null,
         promptText: input.promptText,
         model: input.model,
         imageUrl,

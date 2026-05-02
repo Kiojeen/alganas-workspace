@@ -23,6 +23,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { LinkUpsertInput } from "@/features/links/use-link-library";
 import type { ArchiveLink } from "@/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface LinkFolderChoice {
+  id: string;
+  name: string;
+}
 
 const formSchema = z.object({
   title: z
@@ -30,6 +42,7 @@ const formSchema = z.object({
     .trim()
     .min(1, { message: "Title is required." })
     .max(160, { message: "Title must be 160 characters or less." }),
+  folderId: z.string().trim().min(1, { message: "Please select a folder." }),
   url: z.url({ message: "Please enter a valid URL." }).trim().max(2048),
   description: z
     .string()
@@ -42,7 +55,8 @@ const formSchema = z.object({
 interface LinkFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  folderId: string;
+  folderId?: string;
+  folderChoices?: LinkFolderChoice[];
   initialData?: ArchiveLink | null;
   onSave: (link: LinkUpsertInput) => Promise<void>;
 }
@@ -51,6 +65,7 @@ export function LinkFormDialog({
   open,
   onOpenChange,
   folderId,
+  folderChoices = [],
   initialData,
   onSave,
 }: LinkFormDialogProps) {
@@ -58,6 +73,7 @@ export function LinkFormDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData?.title ?? "",
+      folderId: initialData?.folderId ?? folderId ?? "",
       url: initialData?.url ?? "",
       description: initialData?.description ?? "",
     },
@@ -70,6 +86,7 @@ export function LinkFormDialog({
 
     form.reset({
       title: initialData?.title ?? "",
+      folderId: initialData?.folderId ?? folderId ?? "",
       url: initialData?.url ?? "",
       description: initialData?.description ?? "",
     });
@@ -82,7 +99,7 @@ export function LinkFormDialog({
   const handleSave = async (values: z.infer<typeof formSchema>) => {
     await onSave({
       id: initialData?.id,
-      folderId,
+      folderId: values.folderId,
       title: values.title.trim(),
       url: values.url.trim(),
       description: values.description?.trim() ?? undefined,
@@ -124,6 +141,41 @@ export function LinkFormDialog({
                   </Field>
                 )}
               />
+
+              {!folderId ? (
+                <Controller
+                  name="folderId"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="link-folder">Folder</FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isSaving}
+                      >
+                        <SelectTrigger
+                          id="link-folder"
+                          className="bg-primary-foreground"
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select a folder" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-primary-foreground">
+                          {folderChoices.map((folder) => (
+                            <SelectItem key={folder.id} value={folder.id}>
+                              {folder.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid ? (
+                        <FieldError errors={[fieldState.error]} />
+                      ) : null}
+                    </Field>
+                  )}
+                />
+              ) : null}
 
               <Controller
                 name="url"

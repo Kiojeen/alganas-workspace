@@ -36,12 +36,24 @@ import {
 import type { AiPrompt } from "@/types";
 import { MODELS_LIST } from "@/components/models-list";
 
+interface PromptFolderChoice {
+  id: string;
+  name: string;
+}
+
 const formSchema = z.object({
   title: z
     .string()
     .trim()
     .min(1, { message: "Title is required." })
     .max(160, { message: "Title must be 160 characters or less." }),
+  description: z
+    .string()
+    .trim()
+    .max(2000, { message: "Description must be 2000 characters or less." })
+    .optional()
+    .or(z.literal("")),
+  folderId: z.string().trim().min(1, { message: "Please select a folder." }),
   model: z.string().trim().min(1, { message: "Please select a model." }),
   promptText: z
     .string()
@@ -53,8 +65,9 @@ const formSchema = z.object({
 interface PromptFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  folderId: string;
-  folderName: string;
+  folderId?: string;
+  folderName?: string;
+  folderChoices?: PromptFolderChoice[];
   initialData?: AiPrompt | null;
   onSave: (prompt: PromptUpsertInput) => Promise<void>;
 }
@@ -85,6 +98,7 @@ export function PromptFormDialog({
   onOpenChange,
   folderId,
   folderName,
+  folderChoices = [],
   initialData,
   onSave,
 }: PromptFormDialogProps) {
@@ -94,6 +108,8 @@ export function PromptFormDialog({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: initialData?.title ?? "",
+      description: initialData?.description ?? "",
+      folderId: initialData?.folderId ?? folderId ?? "",
       promptText: initialData?.promptText ?? "",
       model: initialData?.model ?? "",
     },
@@ -104,6 +120,8 @@ export function PromptFormDialog({
 
     form.reset({
       title: initialData?.title ?? "",
+      description: initialData?.description ?? "",
+      folderId: initialData?.folderId ?? folderId ?? "",
       promptText: initialData?.promptText ?? "",
       model: initialData?.model ?? "",
     });
@@ -129,9 +147,10 @@ export function PromptFormDialog({
     await onSave({
       id: initialData?.id,
       title: values.title.trim(),
+      description: values.description?.trim() || undefined,
       promptText: values.promptText.trim(),
       model: values.model,
-      folderId: initialData?.folderId ?? folderId,
+      folderId: values.folderId,
       imageUpload,
       removeImage,
     });
@@ -144,9 +163,11 @@ export function PromptFormDialog({
       <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>{initialData ? "Edit Prompt" : "Add New Prompt"}</DialogTitle>
-          <DialogDescription>
-            This prompt will be saved in {folderName}.
-          </DialogDescription>
+          {folderName ? (
+            <DialogDescription>
+              This prompt will be saved in {folderName}.
+            </DialogDescription>
+          ) : null}
         </DialogHeader>
         <Form {...form}>
           <form
@@ -175,6 +196,41 @@ export function PromptFormDialog({
                 )}
               />
 
+              {!folderId ? (
+                <Controller
+                  name="folderId"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="prompt-folder">Folder</FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isSaving}
+                      >
+                        <SelectTrigger
+                          id="prompt-folder"
+                          className="bg-primary-foreground"
+                          aria-invalid={fieldState.invalid}
+                        >
+                          <SelectValue placeholder="Select a folder" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-primary-foreground">
+                          {folderChoices.map((folder) => (
+                            <SelectItem key={folder.id} value={folder.id}>
+                              {folder.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid ? (
+                        <FieldError errors={[fieldState.error]} />
+                      ) : null}
+                    </Field>
+                  )}
+                />
+              ) : null}
+
               <Controller
                 name="model"
                 control={form.control}
@@ -202,6 +258,29 @@ export function PromptFormDialog({
                         ))}
                       </SelectContent>
                     </Select>
+                    {fieldState.invalid ? (
+                      <FieldError errors={[fieldState.error]} />
+                    ) : null}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="description"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="prompt-description">
+                      Description (Optional)
+                    </FieldLabel>
+                    <Textarea
+                      {...field}
+                      id="prompt-description"
+                      placeholder="What should you remember about this prompt?"
+                      className="bg-primary-foreground h-24 resize-none"
+                      data-invalid={fieldState.invalid}
+                      disabled={isSaving}
+                    />
                     {fieldState.invalid ? (
                       <FieldError errors={[fieldState.error]} />
                     ) : null}

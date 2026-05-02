@@ -36,6 +36,7 @@ export function FolderPromptsContent({ folderId }: FolderPromptsContentProps) {
       (prompt) =>
         prompt.folderId === folderId &&
         (prompt.title.toLowerCase().includes(query) ||
+          prompt.description?.toLowerCase().includes(query) ||
           prompt.promptText.toLowerCase().includes(query)),
     );
   }, [folderId, prompts, searchQuery]);
