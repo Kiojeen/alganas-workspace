@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { authClient } from "@/server/better-auth/client";
+import { authClient, type User } from "@/server/better-auth/client";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -31,14 +31,8 @@ const navigationItems = [
   { href: "/links", label: "Links", icon: Link2 },
 ];
 
-interface WorkspaceNavigationProps {
-  user?: {
-    name?: string | null;
-    email?: string | null;
-  } | null;
-}
 
-function getUserInitials(user?: WorkspaceNavigationProps["user"]) {
+function getUserInitials(user?: User) {
   const source = user?.name?.trim() ?? user?.email?.trim() ?? "G";
   return source
     .split(/\s+/)
@@ -47,10 +41,12 @@ function getUserInitials(user?: WorkspaceNavigationProps["user"]) {
     .join("");
 }
 
-export function WorkspaceNavigation({ user }: WorkspaceNavigationProps) {
+export function WorkspaceNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const session = authClient.useSession();
+  const user = session.data?.user;
+  
 
   const displayName = user?.name?.trim() ?? "Workspace User";
   const displayEmail = user?.email?.trim() ?? "Not signed in";

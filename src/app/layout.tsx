@@ -22,7 +22,6 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const session = await getSession();
   return (
     <html
       lang="en"
@@ -39,7 +38,7 @@ export default async function RootLayout({
               disableTransitionOnChange
             >
               <TooltipProvider>
-                <WorkspaceNavigation user={session?.user} />
+                <WorkspaceNavigation />
                 {children}
               </TooltipProvider>
               <Toaster />
