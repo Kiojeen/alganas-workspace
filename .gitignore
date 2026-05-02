@@ -46,3 +46,11 @@ yarn-error.log*
 .idea
 
 /public/prompt_images
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example

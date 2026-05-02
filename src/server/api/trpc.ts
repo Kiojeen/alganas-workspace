@@ -12,7 +12,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@/server/better-auth";
-import { db } from "@/server/db";
+import { getDB } from "@/server/db";
 
 /**
  * 1. CONTEXT
@@ -31,7 +31,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     headers: opts.headers,
   });
   return {
-    db,
+    db: await getDB(),
     session,
     ...opts,
   };

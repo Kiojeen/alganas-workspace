@@ -5,21 +5,23 @@ export const promptFolders = sqliteTable(
   "prompt_folder",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    name: d.text({ length: 255 }).notNull(),
-    icon: d.text({ length: 255 }).notNull(),
+    name: d.text("name", { length: 255 }).notNull(),
+    icon: d.text("icon", { length: 255 }).notNull(),
     createdById: d
-      .text({ length: 255 })
+      .text("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [
     index("prompt_folder_created_by_idx").on(t.createdById),
@@ -42,27 +44,29 @@ export const prompts = sqliteTable(
   "prompt",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     folderId: d
-      .text({ length: 255 })
+      .text("folder_id", { length: 255 })
       .notNull()
       .references(() => promptFolders.id, { onDelete: "cascade" }),
-    title: d.text({ length: 255 }).notNull(),
-    promptText: d.text().notNull(),
-    model: d.text({ length: 255 }).notNull(),
-    imageUrl: d.text({ length: 255 }),
+    title: d.text("title", { length: 255 }).notNull(),
+    promptText: d.text("prompt_text").notNull(),
+    model: d.text("model", { length: 255 }).notNull(),
+    imageUrl: d.text("image_url", { length: 255 }),
     createdById: d
-      .text({ length: 255 })
+      .text("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [
     index("prompt_folder_id_idx").on(t.folderId),
@@ -86,21 +90,23 @@ export const linkFolders = sqliteTable(
   "link_folder",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    name: d.text({ length: 255 }).notNull(),
-    icon: d.text({ length: 255 }).notNull(),
+    name: d.text("name", { length: 255 }).notNull(),
+    icon: d.text("icon", { length: 255 }).notNull(),
     createdById: d
-      .text({ length: 255 })
+      .text("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [
     index("link_folder_created_by_idx").on(t.createdById),
@@ -120,26 +126,28 @@ export const links = sqliteTable(
   "link",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     folderId: d
-      .text({ length: 255 })
+      .text("folder_id", { length: 255 })
       .notNull()
       .references(() => linkFolders.id, { onDelete: "cascade" }),
-    title: d.text({ length: 255 }).notNull(),
-    url: d.text({ length: 2048 }).notNull(),
-    description: d.text(),
+    title: d.text("title", { length: 255 }).notNull(),
+    url: d.text("url", { length: 2048 }).notNull(),
+    description: d.text("description"),
     createdById: d
-      .text({ length: 255 })
+      .text("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [
     index("link_folder_id_idx").on(t.folderId),
@@ -162,19 +170,23 @@ export const linksRelations = relations(links, ({ one }) => ({
 // Better Auth core tables
 export const user = sqliteTable("user", (d) => ({
   id: d
-    .text({ length: 255 })
+    .text("id", { length: 255 })
     .notNull()
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  name: d.text({ length: 255 }),
-  email: d.text({ length: 255 }).notNull().unique(),
-  emailVerified: d.integer({ mode: "boolean" }).default(false),
-  image: d.text({ length: 255 }),
+  name: d.text("name", { length: 255 }),
+  email: d.text("email", { length: 255 }).notNull().unique(),
+  emailVerified: d
+    .integer("email_verified", { mode: "boolean" })
+    .default(false),
+  image: d.text("image", { length: 255 }),
   createdAt: d
-    .integer({ mode: "timestamp" })
+    .integer("created_at", { mode: "timestamp" })
     .default(sql`(unixepoch())`)
     .notNull(),
-  updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+  updatedAt: d
+    .integer("updated_at", { mode: "timestamp" })
+    .$onUpdate(() => new Date()),
 }));
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -190,28 +202,34 @@ export const account = sqliteTable(
   "account",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     userId: d
-      .text({ length: 255 })
+      .text("user_id", { length: 255 })
       .notNull()
       .references(() => user.id),
-    accountId: d.text({ length: 255 }).notNull(),
-    providerId: d.text({ length: 255 }).notNull(),
-    accessToken: d.text(),
-    refreshToken: d.text(),
-    accessTokenExpiresAt: d.integer({ mode: "timestamp" }),
-    refreshTokenExpiresAt: d.integer({ mode: "timestamp" }),
-    scope: d.text({ length: 255 }),
-    idToken: d.text(),
-    password: d.text(),
+    accountId: d.text("account_id", { length: 255 }).notNull(),
+    providerId: d.text("provider_id", { length: 255 }).notNull(),
+    accessToken: d.text("access_token"),
+    refreshToken: d.text("refresh_token"),
+    accessTokenExpiresAt: d.integer("access_token_expires_at", {
+      mode: "timestamp",
+    }),
+    refreshTokenExpiresAt: d.integer("refresh_token_expires_at", {
+      mode: "timestamp",
+    }),
+    scope: d.text("scope", { length: 255 }),
+    idToken: d.text("id_token"),
+    password: d.text("password"),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [index("account_user_id_idx").on(t.userId)],
 );
@@ -224,23 +242,25 @@ export const session = sqliteTable(
   "session",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
     userId: d
-      .text({ length: 255 })
+      .text("user_id", { length: 255 })
       .notNull()
       .references(() => user.id),
-    token: d.text({ length: 255 }).notNull().unique(),
-    expiresAt: d.integer({ mode: "timestamp" }).notNull(),
-    ipAddress: d.text({ length: 255 }),
-    userAgent: d.text({ length: 255 }),
+    token: d.text("token", { length: 255 }).notNull().unique(),
+    expiresAt: d.integer("expires_at", { mode: "timestamp" }).notNull(),
+    ipAddress: d.text("ip_address", { length: 255 }),
+    userAgent: d.text("user_agent", { length: 255 }),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [index("session_user_id_idx").on(t.userId)],
 );
@@ -253,18 +273,20 @@ export const verification = sqliteTable(
   "verification",
   (d) => ({
     id: d
-      .text({ length: 255 })
+      .text("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    identifier: d.text({ length: 255 }).notNull(),
-    value: d.text({ length: 255 }).notNull(),
-    expiresAt: d.integer({ mode: "timestamp" }).notNull(),
+    identifier: d.text("identifier", { length: 255 }).notNull(),
+    value: d.text("value", { length: 255 }).notNull(),
+    expiresAt: d.integer("expires_at", { mode: "timestamp" }).notNull(),
     createdAt: d
-      .integer({ mode: "timestamp" })
+      .integer("created_at", { mode: "timestamp" })
       .default(sql`(unixepoch())`)
       .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+    updatedAt: d
+      .integer("updated_at", { mode: "timestamp" })
+      .$onUpdate(() => new Date()),
   }),
   (t) => [index("verification_identifier_idx").on(t.identifier)],
 );
