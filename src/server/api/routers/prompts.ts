@@ -1,13 +1,13 @@
-import { and, desc, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
-import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
 import { schema } from "@/server/db/schema";
 import { deletePromptImage, savePromptImage } from "@/server/prompt-images";
 

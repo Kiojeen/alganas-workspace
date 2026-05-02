@@ -1,15 +1,16 @@
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { TRPCReactProvider } from "@/trpc/react";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
-import { getSession } from "@/server/better-auth/server";
-import { WorkspaceNavigation } from "@/components/workspace-navigation";
-import { playfairDisplay } from "@/styles/fonts";
 import PWAProvider from "@/providers/sw-provider";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
+import { WorkspaceNavigation } from "@/components/workspace-navigation";
+import { getSession } from "@/server/better-auth/server";
+import { playfairDisplay } from "@/styles/fonts";
+import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
   title: "Alganas Workspace",
