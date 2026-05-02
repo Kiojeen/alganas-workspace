@@ -9,7 +9,6 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 import { schema } from "@/server/db/schema";
-import { deletePromptImage, savePromptImage } from "@/server/prompt-images";
 
 const promptFolderInputSchema = z.object({
   id: z.string().optional(),
@@ -87,9 +86,9 @@ export const promptsRouter = createTRPCRouter({
         },
       });
 
-      await Promise.all(
-        folderPrompts.map((prompt) => deletePromptImage(prompt.imageUrl)),
-      );
+      // await Promise.all(
+      //   folderPrompts.map((prompt) => deletePromptImage(prompt.imageUrl)),
+      // );
 
       await ctx.db
         .delete(schema.promptFolders)
@@ -130,20 +129,20 @@ export const promptsRouter = createTRPCRouter({
           });
         }
 
-        let imageUrl = existingPrompt.imageUrl ?? undefined;
+        // let imageUrl = existingPrompt.imageUrl ?? undefined;
 
-        if (input.removeImage) {
-          await deletePromptImage(existingPrompt.imageUrl);
-          imageUrl = undefined;
-        }
+        // if (input.removeImage) {
+        //   await deletePromptImage(existingPrompt.imageUrl);
+        //   imageUrl = undefined;
+        // }
 
-        if (input.imageUpload) {
-          await deletePromptImage(existingPrompt.imageUrl);
-          imageUrl = await savePromptImage({
-            ...input.imageUpload,
-            userId: ctx.session.user.id,
-          });
-        }
+        // if (input.imageUpload) {
+        //   await deletePromptImage(existingPrompt.imageUrl);
+        //   imageUrl = await savePromptImage({
+        //     ...input.imageUpload,
+        //     userId: ctx.session.user.id,
+        //   });
+        // }
 
         await ctx.db
           .update(schema.prompts)
@@ -152,7 +151,7 @@ export const promptsRouter = createTRPCRouter({
             title: input.title,
             promptText: input.promptText,
             model: input.model,
-            imageUrl,
+            // imageUrl,
             updatedAt: new Date(),
           })
           .where(
@@ -165,19 +164,19 @@ export const promptsRouter = createTRPCRouter({
         return;
       }
 
-      const imageUrl = input.imageUpload
-        ? await savePromptImage({
-            ...input.imageUpload,
-            userId: ctx.session.user.id,
-          })
-        : undefined;
+      // const imageUrl = input.imageUpload
+      //   ? await savePromptImage({
+      //       ...input.imageUpload,
+      //       userId: ctx.session.user.id,
+      //     })
+      //   : undefined;
 
       await ctx.db.insert(schema.prompts).values({
         folderId: input.folderId,
         title: input.title,
         promptText: input.promptText,
         model: input.model,
-        imageUrl,
+        // imageUrl,
         createdById: ctx.session.user.id,
       });
     }),
@@ -196,7 +195,7 @@ export const promptsRouter = createTRPCRouter({
         return;
       }
 
-      await deletePromptImage(prompt.imageUrl);
+      // await deletePromptImage(prompt.imageUrl);
 
       await ctx.db
         .delete(schema.prompts)
