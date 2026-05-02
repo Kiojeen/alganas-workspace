@@ -30,7 +30,6 @@
 			"database_name": "alganas-workspace-db",
 			"database_id": "8cee7894-9471-43b7-937b-6ca223afff24",
 			"migrations_dir": "drizzle",
-			"remote": true,
 		}
 	]
 }
