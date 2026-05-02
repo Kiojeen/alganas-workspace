@@ -10,8 +10,3 @@ export const getDB = cache(async () => {
   const { env } = await getCloudflareContext({ async: true });
   return drizzle(env.DB, { schema });
 });
-
-export const getDBAsync = cache(async () => {
-  const { env } = await getCloudflareContext({ async: true });
-  return drizzle(env.DB, { schema });
-});
