@@ -25,7 +25,6 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.2",
     "@hookform/resolvers": "^5.2.2",
-    "@libsql/client": "^0.17.3",
     "@opennextjs/cloudflare": "^1.19.5",
     "@opentelemetry/api": "^1.9.1",
     "@radix-ui/react-label": "^2.1.8",
