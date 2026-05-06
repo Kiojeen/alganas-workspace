@@ -1,26 +1,31 @@
-import { relations, sql } from "drizzle-orm";
-import { index, sqliteTable } from "drizzle-orm/sqlite-core";
+import {
+  pgTable,
+  varchar,
+  text,
+  timestamp,
+  index,
+  boolean,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
-export const promptFolders = sqliteTable(
+
+export const promptFolders = pgTable(
   "prompt_folder",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
+  {
+    id: varchar("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    name: d.text({ length: 255 }).notNull(),
-    icon: d.text({ length: 255 }).notNull(),
-    createdById: d
-      .text({ length: 255 })
+    name: varchar("name", { length: 255 }).notNull(),
+    icon: varchar("icon", { length: 255 }).notNull(),
+    createdById: varchar("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
   (t) => [
     index("prompt_folder_created_by_idx").on(t.createdById),
     index("prompt_folder_name_idx").on(t.name),
@@ -38,33 +43,29 @@ export const promptFoldersRelations = relations(
   }),
 );
 
-export const prompts = sqliteTable(
+export const prompts = pgTable(
   "prompt",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
+  {
+    id: varchar("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    folderId: d
-      .text({ length: 255 })
+    folderId: varchar("folder_id", { length: 255 })
       .notNull()
       .references(() => promptFolders.id, { onDelete: "cascade" }),
-    title: d.text({ length: 255 }).notNull(),
-    description: d.text(),
-    promptText: d.text().notNull(),
-    model: d.text({ length: 255 }).notNull(),
-    imageUrl: d.text({ length: 255 }),
-    createdById: d
-      .text({ length: 255 })
+    title: varchar("title", { length: 255 }).notNull(),
+    description: text("description"),
+    promptText: text("prompt_text").notNull(),
+    model: varchar("model", { length: 255 }).notNull(),
+    imageUrl: varchar("image_url", { length: 255 }),
+    createdById: varchar("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
   (t) => [
     index("prompt_folder_id_idx").on(t.folderId),
     index("prompt_created_by_idx").on(t.createdById),
@@ -83,26 +84,23 @@ export const promptsRelations = relations(prompts, ({ one }) => ({
   }),
 }));
 
-export const linkFolders = sqliteTable(
+export const linkFolders = pgTable(
   "link_folder",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
+  {
+    id: varchar("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    name: d.text({ length: 255 }).notNull(),
-    icon: d.text({ length: 255 }).notNull(),
-    createdById: d
-      .text({ length: 255 })
+    name: varchar("name", { length: 255 }).notNull(),
+    icon: varchar("icon", { length: 255 }).notNull(),
+    createdById: varchar("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
   (t) => [
     index("link_folder_created_by_idx").on(t.createdById),
     index("link_folder_name_idx").on(t.name),
@@ -117,31 +115,27 @@ export const linkFoldersRelations = relations(linkFolders, ({ many, one }) => ({
   }),
 }));
 
-export const links = sqliteTable(
+export const links = pgTable(
   "link",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
+  {
+    id: varchar("id", { length: 255 })
       .notNull()
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
-    folderId: d
-      .text({ length: 255 })
+    folderId: varchar("folder_id", { length: 255 })
       .notNull()
       .references(() => linkFolders.id, { onDelete: "cascade" }),
-    title: d.text({ length: 255 }).notNull(),
-    url: d.text({ length: 2048 }).notNull(),
-    description: d.text(),
-    createdById: d
-      .text({ length: 255 })
+    title: varchar("title", { length: 255 }).notNull(),
+    url: varchar("url", { length: 2048 }).notNull(),
+    description: text("description"),
+    createdById: varchar("created_by_id", { length: 255 })
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).$onUpdate(
+      () => new Date(),
+    ),
+  },
   (t) => [
     index("link_folder_id_idx").on(t.folderId),
     index("link_created_by_idx").on(t.createdById),
@@ -161,119 +155,114 @@ export const linksRelations = relations(links, ({ one }) => ({
 }));
 
 // Better Auth core tables
-export const user = sqliteTable("user", (d) => ({
-  id: d
-    .text({ length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: d.text({ length: 255 }),
-  email: d.text({ length: 255 }).notNull().unique(),
-  emailVerified: d.integer({ mode: "boolean" }).default(false),
-  image: d.text({ length: 255 }),
-  createdAt: d
-    .integer({ mode: "timestamp" })
-    .default(sql`(unixepoch())`)
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-}));
+});
+
+export const session = pgTable(
+  "session",
+  {
+    id: text("id").primaryKey(),
+    expiresAt: timestamp("expires_at").notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [index("session_userId_idx").on(table.userId)],
+);
+
+export const account = pgTable(
+  "account",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at"),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("account_userId_idx").on(table.userId)],
+);
+
+export const verification = pgTable(
+  "verification",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("verification_identifier_idx").on(table.identifier)],
+);
 
 export const userRelations = relations(user, ({ many }) => ({
-  account: many(account),
-  linkFolders: many(linkFolders),
-  links: many(links),
-  promptFolders: many(promptFolders),
-  prompts: many(prompts),
-  session: many(session),
+  sessions: many(session),
+  accounts: many(account),
 }));
-
-export const account = sqliteTable(
-  "account",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
-      .notNull()
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: d
-      .text({ length: 255 })
-      .notNull()
-      .references(() => user.id),
-    accountId: d.text({ length: 255 }).notNull(),
-    providerId: d.text({ length: 255 }).notNull(),
-    accessToken: d.text(),
-    refreshToken: d.text(),
-    accessTokenExpiresAt: d.integer({ mode: "timestamp" }),
-    refreshTokenExpiresAt: d.integer({ mode: "timestamp" }),
-    scope: d.text({ length: 255 }),
-    idToken: d.text(),
-    password: d.text(),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
-  (t) => [index("account_user_id_idx").on(t.userId)],
-);
-
-export const accountRelations = relations(account, ({ one }) => ({
-  user: one(user, { fields: [account.userId], references: [user.id] }),
-}));
-
-export const session = sqliteTable(
-  "session",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
-      .notNull()
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    userId: d
-      .text({ length: 255 })
-      .notNull()
-      .references(() => user.id),
-    token: d.text({ length: 255 }).notNull().unique(),
-    expiresAt: d.integer({ mode: "timestamp" }).notNull(),
-    ipAddress: d.text({ length: 255 }),
-    userAgent: d.text({ length: 255 }),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
-  }),
-  (t) => [index("session_user_id_idx").on(t.userId)],
-);
 
 export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(user, { fields: [session.userId], references: [user.id] }),
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id],
+  }),
 }));
 
-export const verification = sqliteTable(
-  "verification",
-  (d) => ({
-    id: d
-      .text({ length: 255 })
-      .notNull()
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
-    identifier: d.text({ length: 255 }).notNull(),
-    value: d.text({ length: 255 }).notNull(),
-    expiresAt: d.integer({ mode: "timestamp" }).notNull(),
-    createdAt: d
-      .integer({ mode: "timestamp" })
-      .default(sql`(unixepoch())`)
-      .notNull(),
-    updatedAt: d.integer({ mode: "timestamp" }).$onUpdate(() => new Date()),
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id],
   }),
-  (t) => [index("verification_identifier_idx").on(t.identifier)],
-);
+}));
 
 export const schema = {
+  user,
+  session,
+  account,
+  verification,
   promptFolders,
   prompts,
-
   linkFolders,
   links,
+  
+  // Relations
+  userRelations,
+  sessionRelations,
+  accountRelations,
+  promptFoldersRelations,
+  promptsRelations,
+  linkFoldersRelations,
+  linksRelations,
 };
