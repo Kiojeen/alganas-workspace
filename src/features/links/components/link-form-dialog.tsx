@@ -109,7 +109,7 @@ export function LinkFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-125">
+      <DialogContent className="sm:max-w-125 pb-0">
         <DialogHeader>
           <DialogTitle>
             {initialData ? "Edit Link" : "Save New Link"}

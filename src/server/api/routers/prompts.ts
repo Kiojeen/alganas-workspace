@@ -1,15 +1,19 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { DEFAULT_FOLDER_ICON } from "@/components/folder-icons";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
+
 import { schema } from "@/server/db/schema";
-import { deletePromptImage, savePromptImage } from "@/server/prompt-images";
+import { s3 } from "@/server/storage";
+import { randomUUID } from "crypto";
+import { env } from "@/env";
 
 const promptFolderInputSchema = z.object({
   id: z.string().optional(),
@@ -18,9 +22,7 @@ const promptFolderInputSchema = z.object({
 });
 
 const promptImageUploadSchema = z.object({
-  fileName: z.string().trim().min(1).max(255),
-  mimeType: z.string().trim().startsWith("image/").max(100),
-  dataBase64: z.string().min(1).max(10_000_000),
+  publicUrl: z.url(),
 });
 
 const promptInputSchema = z.object({
@@ -38,6 +40,35 @@ const promptInputSchema = z.object({
   imageUpload: promptImageUploadSchema.optional(),
   removeImage: z.boolean().optional(),
 });
+
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+
+export const deletePromptImage = async (imageUrl?: string | null) => {
+  if (!imageUrl) return;
+
+  try {
+    // Extract key from public URL
+    const url = new URL(imageUrl);
+
+    // Example:
+    // https://cdn.domain.com/prompts/abc.png
+    // → prompts/abc.png
+    const key = url.pathname.startsWith("/")
+      ? url.pathname.slice(1)
+      : url.pathname;
+
+    if (!key) return;
+
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: env.R2_BUCKET_NAME,
+        Key: key,
+      }),
+    );
+  } catch (err) {
+    console.error("Failed to delete image from R2:", err);
+  }
+};
 
 export const promptsRouter = createTRPCRouter({
   getLibrary: protectedProcedure.query(async ({ ctx }) => {
@@ -145,10 +176,7 @@ export const promptsRouter = createTRPCRouter({
 
         if (input.imageUpload) {
           await deletePromptImage(existingPrompt.imageUrl);
-          imageUrl = await savePromptImage({
-            ...input.imageUpload,
-            userId: ctx.session.user.id,
-          });
+          imageUrl = input.imageUpload.publicUrl;
         }
 
         await ctx.db
@@ -172,12 +200,7 @@ export const promptsRouter = createTRPCRouter({
         return;
       }
 
-      const imageUrl = input.imageUpload
-        ? await savePromptImage({
-            ...input.imageUpload,
-            userId: ctx.session.user.id,
-          })
-        : undefined;
+      const imageUrl = input.imageUpload?.publicUrl;
 
       await ctx.db.insert(schema.prompts).values({
         folderId: input.folderId,
@@ -237,4 +260,30 @@ export const promptsRouter = createTRPCRouter({
 
     return prompt ?? null;
   }),
+
+  getImageUploadUrl: protectedProcedure
+    .input(
+      z.object({
+        fileName: z.string(),
+        mimeType: z.string().regex(/^image\//),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const key = `prompts/${randomUUID()}-${input.fileName}`;
+
+      const signedUrl = await getSignedUrl(
+        s3,
+        new PutObjectCommand({
+          Bucket: env.R2_BUCKET_NAME,
+          Key: key,
+          ContentType: input.mimeType,
+        }), // 60 mins = 1 hour
+        { expiresIn: 60 * 60  },
+      );
+
+      return {
+        signedUrl,
+        publicUrl: `${env.NEXT_PUBLIC_R2_PUBLIC_URL}/${key}`
+      };
+    }),
 });
