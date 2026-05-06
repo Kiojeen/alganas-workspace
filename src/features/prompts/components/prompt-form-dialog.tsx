@@ -72,27 +72,6 @@ interface PromptFormDialogProps {
   onSave: (prompt: PromptUpsertInput) => Promise<void>;
 }
 
-async function fileToBase64(file: File) {
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = reader.result;
-
-      if (typeof result !== "string") {
-        reject(new Error("Failed to read image"));
-        return;
-      }
-
-      const [, dataBase64 = ""] = result.split(",", 2);
-      resolve(dataBase64);
-    };
-
-    reader.onerror = () => reject(new Error("Failed to read image"));
-    reader.readAsDataURL(file);
-  });
-}
-
 export function PromptFormDialog({
   open,
   onOpenChange,
@@ -134,15 +113,9 @@ export function PromptFormDialog({
   const isSaving = form.formState.isSubmitting;
 
   const handleSave = async (values: z.infer<typeof formSchema>) => {
-    let imageUpload: PromptImageUploadInput | undefined;
-
-    if (selectedImage) {
-      imageUpload = {
-        fileName: selectedImage.name,
-        mimeType: selectedImage.type,
-        dataBase64: await fileToBase64(selectedImage),
-      };
-    }
+    const imageUpload: PromptImageUploadInput | undefined = selectedImage
+      ? { file: selectedImage }
+      : undefined;
 
     await onSave({
       id: initialData?.id,
@@ -160,9 +133,11 @@ export function PromptFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-125">
+      <DialogContent className="sm:max-w-125 pb-0">
         <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Prompt" : "Add New Prompt"}</DialogTitle>
+          <DialogTitle>
+            {initialData ? "Edit Prompt" : "Add New Prompt"}
+          </DialogTitle>
           {folderName ? (
             <DialogDescription>
               This prompt will be saved in {folderName}.
@@ -326,7 +301,7 @@ export function PromptFormDialog({
                   }}
                 />
                 <p className="text-muted-foreground text-xs">
-                  Upload an optional preview image. Files are stored in `prompt_images`.
+                  Upload an optional preview image.
                 </p>
                 {initialData?.imageUrl && !selectedImage && !removeImage ? (
                   <div className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">

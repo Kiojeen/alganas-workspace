@@ -4,9 +4,7 @@ import { api } from "@/trpc/react";
 import type { AiPrompt, PromptFolder } from "@/types";
 
 export interface PromptImageUploadInput {
-  dataBase64: string;
-  fileName: string;
-  mimeType: string;
+  file: File;
 }
 
 export interface PromptUpsertInput {
@@ -33,6 +31,7 @@ export function usePromptLibrary() {
 
   const invalidateLibrary = () => utils.prompts.getLibrary.invalidate();
 
+  const getUploadUrlMutation = api.prompts.getImageUploadUrl.useMutation();
   const upsertFolderMutation = api.prompts.upsertFolder.useMutation({
     onSuccess: invalidateLibrary,
   });
@@ -45,6 +44,23 @@ export function usePromptLibrary() {
   const deletePromptMutation = api.prompts.deletePrompt.useMutation({
     onSuccess: invalidateLibrary,
   });
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const { signedUrl, publicUrl } = await getUploadUrlMutation.mutateAsync({
+      fileName: file.name,
+      mimeType: file.type,
+    });
+
+    const res = await fetch(signedUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!res.ok) throw new Error("Failed to upload image to R2");
+
+    return publicUrl;
+  };
 
   const folders: PromptFolder[] =
     libraryQuery.data?.map((folder) => ({
@@ -78,8 +94,16 @@ export function usePromptLibrary() {
       await deleteFolderMutation.mutateAsync({ folderId });
     },
     upsertPrompt: async (prompt: PromptUpsertInput) => {
-      await upsertPromptMutation.mutateAsync(prompt);
+      const publicUrl = prompt.imageUpload?.file
+        ? await uploadImage(prompt.imageUpload.file)
+        : undefined;
+
+      await upsertPromptMutation.mutateAsync({
+        ...prompt,
+        imageUpload: publicUrl ? { publicUrl } : undefined,
+      });
     },
+
     deletePrompt: async (promptId: string) => {
       await deletePromptMutation.mutateAsync({ promptId });
     },
