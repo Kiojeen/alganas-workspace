@@ -33,7 +33,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "./theme-toggle";
 import { toast } from "sonner";
 
@@ -112,6 +111,7 @@ export function WorkspaceNavigation() {
                     ? "bg-secondary text-secondary-foreground"
                     : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
                 )}
+                prefetch
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 {item.label}
